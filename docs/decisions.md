@@ -57,6 +57,19 @@ calls, so this adds no new signup and stays inside the $0 rules. The 500 KB
 cap means `search.py` rejects (rather than silently truncates) an
 oversized source image, since resizing changes what's being searched.
 
+## 2026-09-02 — Contract deployment: programmatic script, not Remix
+
+The spec suggests deploying contracts/FaceRecord.sol manually via Remix +
+MetaMask. Went with deploy.py instead: compiles the contract with py-solc-x
+(auto-installs a pinned solc 0.8.20 binary) and deploys it via web3.py using
+WALLET_PRIVATE_KEY, the same key anchor.py already needs to call
+storeRecord(). One command instead of a manual browser step, and the ABI
+used by anchor.py/proof.py comes from the same compile step (pipeline/contract.py,
+cached per process), so it can't drift from the deployed bytecode. Verified:
+compile_contract() actually compiles the real contract (4 ABI entries:
+RecordStored event, getRecord, records, storeRecord; non-trivial bytecode).
+Deployment itself is unverified, pending d0-4 (RPC) and d0-5 (funded wallet).
+
 ## 2026-09-02 - Build-log tracker: separate rebuilt page instead of mirroring the original
 
 Decision log (this file) and `docs/HANDOFF.md` are the real source of
