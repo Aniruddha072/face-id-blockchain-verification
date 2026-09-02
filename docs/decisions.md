@@ -1,6 +1,6 @@
 # Decisions
 
-## 2026-09-02 — Repo name: face-id-blockchain-verification
+## 2026-09-02 - Repo name: face-id-blockchain-verification
 
 Went with a descriptive name over the task-number variant (hh-goa-2026-task3)
 or the shorter face-verify-chain. Matches the artifact's project title, reads
@@ -14,14 +14,14 @@ else landed on top of it. Local editor/tool state stays out of `.gitignore`
 (itself visible on GitHub) and goes in `.git/info/exclude` instead,
 untracked and invisible.
 
-## 2026-09-02 — Pipeline module layout: package, one module per stage
+## 2026-09-02 - Pipeline module layout: package, one module per stage
 
 `src/pipeline/{detect,search,verify,anchor,proof}.py`, each with one function
 per stage, instead of one flat main.py (the spec's own skeleton) or one
 script per day. Keeps each stage independently testable and readable in
 isolation; matches the Day1-4 build order already laid out in the artifact.
 
-## 2026-09-02 — Error handling: typed exceptions, not result objects
+## 2026-09-02 - Error handling: typed exceptions, not result objects
 
 Stage functions raise from `exceptions.py` (NoFaceDetectedError,
 NoCandidatesFoundError, NoVerifiedMatchError, ChainError); main.py and
@@ -29,13 +29,13 @@ verify_record.py each catch PipelineError once at the top level. Chosen over
 (ok, value, error) result objects to avoid boilerplate at every call site for
 a 5-day build.
 
-## 2026-09-02 — Retries: network calls only
+## 2026-09-02 - Retries: network calls only
 
 `with_retry` wraps only the SerpApi/Serper search call and the web3 RPC
 calls. DeepFace calls are local/CPU-bound and don't transiently fail the way
 a network call does, so they're left unwrapped.
 
-## 2026-09-02 — Two entrypoints, not one CLI with subcommands
+## 2026-09-02 - Two entrypoints, not one CLI with subcommands
 
 `main.py --image <path>` runs the full pipeline; `verify_record.py --tx
 <hash>` runs the read-back proof independently, loading the matching record
@@ -44,7 +44,7 @@ naming and keeps the proof step usable without re-running the whole
 pipeline. CLI parsing is argparse (stdlib), no third-party dependency for a
 two-flag surface.
 
-## 2026-09-02 — Reverse search input: SerpApi's own image upload, not a hosting service
+## 2026-09-02 - Reverse search input: SerpApi's own image upload, not a hosting service
 
 The spec's reference snippet passes `image_public_url` straight to SerpApi's
 `google_lens` engine, but never says how a local photo becomes a public URL.
@@ -57,7 +57,7 @@ calls, so this adds no new signup and stays inside the $0 rules. The 500 KB
 cap means `search.py` rejects (rather than silently truncates) an
 oversized source image, since resizing changes what's being searched.
 
-## 2026-09-02 — Contract deployment: programmatic script, not Remix
+## 2026-09-02 - Contract deployment: programmatic script, not Remix
 
 The spec suggests deploying contracts/FaceRecord.sol manually via Remix +
 MetaMask. Went with deploy.py instead: compiles the contract with py-solc-x

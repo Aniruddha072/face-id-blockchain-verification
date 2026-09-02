@@ -32,15 +32,15 @@ are code-complete. Day 4-5 haven't started.
 - src/pipeline/proof.py: read_record() (getRecord() call) unverified, same
   blockers
 - Fixed issue #1 (tf-keras missing for retinaface on tensorflow 2.21)
-- Build-log tracker page (hosted separately from this repo)
-  (source at docs/build-log.html, edit + republish to the same URL; DONE set
-  now has d0-1, d0-2, d1-1, d1-2, d1-4, d2-1..d2-4, d3-1, d3-3, d3-4, 12/56 overall)
+- Build-log tracker page (source at docs/build-log.html, hosted separately
+  from this repo; DONE set now has d0-1, d0-2, d1-1, d1-2, d1-4, d2-1..d2-4,
+  d3-1, d3-3, d3-4, 12/56 overall)
 
 **Not done (needs manual signup / wallet setup, can't be scripted):**
-- SerpApi account + key (d0-3) — blocks live search.py/verify.py
-- Alchemy account + Polygon Amoy app + RPC URL (d0-4) — blocks deploy.py, anchor.py, proof.py
-- Brand-new burner MetaMask wallet, funded from the Amoy testnet faucet (d0-5) — same blockers as d0-4
-- Pick 1-2 consenting test subjects with a public social presence (d0-6) — blocks real-photo testing
+- SerpApi account + key (d0-3) - blocks live search.py/verify.py
+- Alchemy account + Polygon Amoy app + RPC URL (d0-4) - blocks deploy.py, anchor.py, proof.py
+- Brand-new burner MetaMask wallet, funded from the Amoy testnet faucet (d0-5) - same blockers as d0-4
+- Pick 1-2 consenting test subjects with a public social presence (d0-6) - blocks real-photo testing
 - Fill in .env from .env.example once the above exist
 
 ## Blocked

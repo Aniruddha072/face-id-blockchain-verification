@@ -443,11 +443,11 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
   const STACK = [
     ['Face detect + encode','DeepFace (Python): RetinaFace + ArcFace','One-line API, swappable backends, free, fully self-hosted, no signup at all','face_recognition (dlib) if install gives you trouble'],
     ['Reverse image search','SerpApi: Google Lens engine','Genuine Google reverse-image results, 250 free searches/month, no card required','Serper.dev, 2,500 free one-time queries, no card, if you need more headroom'],
-    ['Match verification','DeepFace.verify() on every candidate',"This is what turns a visually similar hit into a genuine face match, runs locally for free",'—'],
+    ['Match verification','DeepFace.verify() on every candidate',"This is what turns a visually similar hit into a genuine face match, runs locally for free",'n/a'],
     ['Blockchain','Polygon Amoy testnet via Alchemy RPC + web3.py','Free forever, no card, ~2s finality, full Solidity support, PolygonScan lets judges verify independently',"Chainstack's free Developer RPC plan (also no card), if Alchemy ever asks for billing info"],
     ['Smart contract','Minimal Solidity: storeRecord() + event + getRecord()','Gives judges an actual on-chain function to point at, not a raw calldata blob. Deploy free via Remix in the browser','A plain tx with the hash in calldata, if time is short'],
     ['Off-chain storage','Pin the full record JSON to IPFS via Pinata (free tier, no card)','Keeps the chain write cheap while the full record stays immutable and content-addressed','Skip IPFS entirely, the on-chain hash alone already satisfies the requirement'],
-    ['Wallet','Brand-new burner MetaMask wallet','Funded only via testnet faucet, zero real funds ever touch this project','—'],
+    ['Wallet','Brand-new burner MetaMask wallet','Funded only via testnet faucet, zero real funds ever touch this project','n/a'],
   ];
 
   const DAYS = [
