@@ -1,0 +1,6 @@
+deepface
+opencv-python
+retina-face
+requests
+web3
+python-dotenv
