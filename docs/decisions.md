@@ -44,6 +44,19 @@ naming and keeps the proof step usable without re-running the whole
 pipeline. CLI parsing is argparse (stdlib), no third-party dependency for a
 two-flag surface.
 
+## 2026-09-02 — Reverse search input: SerpApi's own image upload, not a hosting service
+
+The spec's reference snippet passes `image_public_url` straight to SerpApi's
+`google_lens` engine, but never says how a local photo becomes a public URL.
+Checked SerpApi's docs: it has a built-in two-step flow for exactly this,
+no separate image host needed. `POST https://serpapi.com/image` with the
+image as multipart form data returns an `image_id` (valid 10 minutes, source
+images capped at 500 KB, JPG/PNG/WebP); that `image_id` then replaces `url`
+in the `google_lens` search call. Same free-tier SerpApi key covers both
+calls, so this adds no new signup and stays inside the $0 rules. The 500 KB
+cap means `search.py` rejects (rather than silently truncates) an
+oversized source image, since resizing changes what's being searched.
+
 ## 2026-09-02 - Build-log tracker: separate rebuilt page instead of mirroring the original
 
 Decision log (this file) and `docs/HANDOFF.md` are the real source of
