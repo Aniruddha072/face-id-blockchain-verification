@@ -1,6 +1,7 @@
 deepface
 opencv-python
 retina-face
+tf-keras
 requests
 web3
 python-dotenv
