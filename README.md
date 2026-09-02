@@ -1,6 +1,6 @@
 # Face ID + Blockchain Verification
 
-> HH Goa 2026 · Partner Trials · Task #3
+> HH Goa 2026, Partner Trials, Task #3
 
 A pipeline that detects a face, finds a genuine social media match through
 reverse-image search, and anchors that match on-chain as a tamper-evident,
@@ -8,18 +8,18 @@ verifiable record.
 
 ## Overview
 
-The pipeline runs in five stages: it detects and encodes a face from an input
-photo, finds where that face appears on the public web via reverse-image
-search, verifies each candidate is genuinely the same face (not just visually
-similar), hashes the resulting match record and writes it to a smart
-contract on a public testnet, and finally reads the chain back to prove the
-record hasn't been altered.
+The pipeline runs in five stages. It detects and encodes a face from an
+input photo, finds where that face appears on the public web via
+reverse-image search, verifies each candidate is genuinely the same face
+(not just visually similar), hashes the resulting match record and writes
+it to a smart contract on a public testnet, and finally reads the chain
+back to prove the record hasn't been altered.
 
 ## Architecture
 
 ```
-photo --> detect & encode --> reverse-image search --> verify match --> hash + anchor on-chain --> read-back proof
-          (DeepFace/ArcFace)   (SerpApi Google Lens)    (DeepFace.verify)   (web3.py -> Polygon Amoy)   (verify_record.py)
+photo -> detect & encode -> reverse-image search -> verify match -> hash + anchor on-chain -> read-back proof
+         (DeepFace/ArcFace)   (SerpApi Google Lens)    (DeepFace.verify)   (web3.py, Polygon Amoy)   (verify_record.py)
 ```
 
 ## Requirements mapping
@@ -34,13 +34,35 @@ photo --> detect & encode --> reverse-image search --> verify match --> hash + a
 
 | Layer | Pick | Why |
 |---|---|---|
-| Face detect + encode | DeepFace (Python) — RetinaFace + ArcFace | One-line API, swappable backends, free, self-hosted |
-| Reverse image search | SerpApi — Google Lens engine | Genuine Google reverse-image results, 250 free searches/month, no card |
+| Face detect + encode | DeepFace (Python), RetinaFace + ArcFace | One-line API, swappable backends, free, self-hosted |
+| Reverse image search | SerpApi, Google Lens engine | Genuine Google reverse-image results, 250 free searches/month, no card |
 | Match verification | `DeepFace.verify()` on every candidate | Confirms a genuine face match, runs locally for free |
 | Blockchain | Polygon Amoy testnet via Alchemy RPC + web3.py | Free, no card, ~2s finality, PolygonScan lets judges verify independently |
 | Smart contract | Minimal Solidity: `storeRecord()` + event + `getRecord()` | Gives judges an on-chain function to point at |
+| Contract deployment | `deploy.py`, compiles via py-solc-x and deploys with web3.py | One command instead of a manual Remix step, same wallet key `main.py` already needs |
 | Off-chain storage (optional) | Pinata (IPFS) | Keeps the full record content-addressed; skippable |
 | Wallet | Burner MetaMask wallet, testnet POL only | Zero real funds ever touch this project |
+
+## Project layout
+
+```
+main.py               run the full pipeline against one image
+verify_record.py      given a tx hash, confirm the on-chain record still matches
+deploy.py             compile and deploy contracts/FaceRecord.sol
+contracts/
+  FaceRecord.sol       the on-chain record store
+src/pipeline/
+  detect.py            face detection + embedding
+  search.py             reverse image search (SerpApi)
+  verify.py              candidate face verification
+  anchor.py               record building + on-chain write
+  proof.py                  on-chain read-back
+  contract.py                shared Solidity compile step
+  config.py                  .env loading
+  retry.py                    retry-with-backoff for network calls
+  exceptions.py                 typed errors for all of the above
+output/                saved record JSON per run (gitignored)
+```
 
 ## Setup
 
@@ -49,19 +71,20 @@ python -m venv venv
 venv\Scripts\activate        # Windows
 # source venv/bin/activate   # macOS/Linux
 pip install -r requirements.txt
-cp .env.example .env         # then fill in the values below
+cp .env.example .env         # then fill in SERPAPI_KEY, ALCHEMY_AMOY_RPC_URL, WALLET_PRIVATE_KEY
+python deploy.py             # deploys FaceRecord.sol, prints the address to add as CONTRACT_ADDRESS
 ```
 
 ## Configuration
 
 See `.env.example`. All values required unless noted optional:
 
-- `SERPAPI_KEY` — SerpApi key (Google Lens engine)
-- `SERPER_API_KEY` — optional backup (Serper.dev, 2,500 free one-time queries)
-- `ALCHEMY_AMOY_RPC_URL` — Alchemy RPC URL for the Polygon Amoy testnet app
-- `WALLET_PRIVATE_KEY` — burner wallet private key, funded only via testnet faucet
-- `CONTRACT_ADDRESS` — deployed `FaceRecord` contract address
-- `PINATA_JWT` — optional, only if pinning records to IPFS
+- `SERPAPI_KEY`: SerpApi key (Google Lens engine)
+- `SERPER_API_KEY`: optional backup (Serper.dev, 2,500 free one-time queries)
+- `ALCHEMY_AMOY_RPC_URL`: Alchemy RPC URL for the Polygon Amoy testnet app
+- `WALLET_PRIVATE_KEY`: burner wallet private key, funded only via testnet faucet
+- `CONTRACT_ADDRESS`: deployed `FaceRecord` contract address, from `deploy.py`
+- `PINATA_JWT`: optional, only if pinning records to IPFS
 
 ## How to run
 
@@ -69,7 +92,12 @@ See `.env.example`. All values required unless noted optional:
 python main.py --image photo.jpg
 ```
 
-*(pipeline entrypoint — TODO once Day 1-4 build steps are complete)*
+Runs the full pipeline and saves the result to `output/<tx_hash>.json`. To
+independently confirm a past run still matches what's on-chain:
+
+```bash
+python verify_record.py --tx <tx_hash>
+```
 
 ## Example output
 
@@ -79,27 +107,29 @@ explorer link once the pipeline runs end to end)*
 ## Blockchain choice
 
 Polygon Amoy testnet, accessed via an Alchemy RPC endpoint. Chosen because it
-has a genuine no-card free tier, ~2s block finality, full Solidity support,
-and PolygonScan gives judges an independent way to verify the on-chain record
-without trusting this repo's output.
+has a genuine no-card free tier, roughly 2 second block finality, full
+Solidity support, and PolygonScan gives judges an independent way to verify
+the on-chain record without trusting this repo's output.
 
 ## Known limitations
 
-- Search coverage is limited to what the search engine has indexed — it won't
-  find everything, especially recent or private posts.
-- Match accuracy depends on the embedding model and the input photo's quality
-  (angle, lighting, occlusion).
-- The blockchain proves the record's hash existed at a specific block/time —
-  it's a tamper-evident timestamp of the claim, not proof the matched content
-  itself is authentic.
+- Search coverage is limited to what the search engine has indexed, it
+  won't find everything, especially recent or private posts.
+- Match accuracy depends on the embedding model and the input photo's
+  quality (angle, lighting, occlusion).
+- The blockchain proves the record's hash existed at a specific block and
+  time. It's a tamper-evident timestamp of the claim, not proof the matched
+  content itself is authentic.
 - No liveness or deepfake detection on the input photo.
-- Run only with consenting subjects — face search tools' terms of service
+- Run only with consenting subjects. Face search tools' terms of service
   restrict use for employment, credit, insurance, or tenant-screening
   decisions.
-- This project runs on a public **testnet** (Polygon Amoy), not mainnet — no
-  real funds or mainnet gas are involved.
-- Subject to the search API's rate limits / free-tier cap (SerpApi: 250
+- This project runs on a public **testnet** (Polygon Amoy), not mainnet, so
+  no real funds or mainnet gas are involved.
+- Subject to the search API's rate limits and free-tier cap (SerpApi: 250
   searches/month; Serper.dev fallback: 2,500 one-time queries).
+- SerpApi's image upload caps the source photo at 500 KB; larger files are
+  rejected outright rather than silently resized.
 
 ## Consent / ethics note
 
