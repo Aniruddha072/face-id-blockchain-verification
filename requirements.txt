@@ -1,8 +1,8 @@
-deepface
-opencv-python
-retina-face
-tf-keras
-requests
-web3
-python-dotenv
-py-solc-x
+deepface==0.0.100
+opencv-python==5.0.0.93
+retina-face==0.0.18
+tf-keras==2.21.0
+requests==2.34.2
+web3==8.0.0
+python-dotenv==1.2.3
+py-solc-x==2.0.5
