@@ -15,6 +15,10 @@ Day 0 (Foundations) is mostly done. Day 1-5 haven't started.
 - Pipeline code structure designed and individually confirmed (see decisions.md):
   package layout under src/pipeline/, typed exceptions, retry only on network
   calls, two separate CLI entrypoints (main.py / verify_record.py), argparse
+- Build-log tracker page (hosted separately from this repo)
+  (source lives in the repo at docs/build-log.html, edit it and republish to
+  the same URL via the Artifact tool whenever progress changes; DONE set
+  currently has d0-1, d0-2 marked complete, 2/56 overall)
 
 **Not done (needs manual signup / wallet setup, can't be scripted):**
 - SerpApi account + key

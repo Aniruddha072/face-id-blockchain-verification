@@ -1,0 +1,655 @@
+<title>Face ID + Blockchain Build Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E0F13;
+  --panel:#15171E;
+  --panel-raised:#1A1D26;
+  --line:#262A35;
+  --line-soft:#1E212B;
+  --text:#EDEEF2;
+  --text-muted:#8B8E9B;
+  --text-dim:#5C5F6B;
+  --amber:#F0A857;
+  --teal:#5FC7B8;
+  --periwinkle:#8C93F0;
+  --danger:#E2685C;
+  --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+}
+a{color:var(--amber);}
+a:focus-visible, button:focus-visible, summary:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+.wrap{max-width:880px; margin:0 auto; padding:28px 20px 80px;}
+
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--text-dim);
+  letter-spacing:0.02em;
+  margin-bottom:10px;
+}
+h1{
+  font-size:27px;
+  line-height:1.25;
+  margin:0 0 6px;
+  font-weight:700;
+  letter-spacing:-0.01em;
+  text-wrap:balance;
+}
+.subhead{
+  color:var(--text-muted);
+  font-size:14.5px;
+  max-width:66ch;
+  margin:0 0 22px;
+}
+
+/* ground-truth strip */
+.truth-strip{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:11px 16px;
+  margin-bottom:22px;
+  font-size:12.5px;
+  color:var(--text-muted);
+}
+.truth-strip .truth-left{display:flex; gap:16px; flex-wrap:wrap; align-items:center;}
+.truth-strip strong{color:var(--text); font-weight:600;}
+.truth-strip a{text-decoration:none;}
+.truth-strip a:hover{text-decoration:underline;}
+.dot{color:var(--text-dim);}
+
+.status-row{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  align-items:stretch;
+  margin-bottom:26px;
+}
+.status-card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px 16px;
+  flex:1 1 200px;
+}
+.status-label{
+  font-size:11.5px;
+  color:var(--text-dim);
+  margin-bottom:6px;
+}
+.status-value{
+  font-family:var(--mono);
+  font-size:20px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.status-value.warn{color:var(--danger);}
+.progress-track{
+  height:7px;
+  background:var(--line-soft);
+  border-radius:99px;
+  overflow:hidden;
+  margin-top:10px;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--amber),var(--teal),var(--periwinkle));
+  border-radius:99px;
+}
+
+.pipeline{
+  display:flex;
+  gap:0;
+  margin:0 0 30px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+  flex-wrap:wrap;
+}
+.pstage{
+  flex:1 1 150px;
+  padding:14px 14px 15px;
+  border-right:1px solid var(--line);
+  position:relative;
+}
+.pstage:last-child{border-right:none;}
+.pstage .pnum{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--text-dim);
+  margin-bottom:6px;
+}
+.pstage .ptitle{font-weight:600; font-size:14px; margin-bottom:4px;}
+.pstage .pdesc{font-size:12.5px; color:var(--text-muted);}
+.pstage.c-amber{border-top:2px solid var(--amber);}
+.pstage.c-teal{border-top:2px solid var(--teal);}
+.pstage.c-peri{border-top:2px solid var(--periwinkle);}
+
+section.block{margin-bottom:34px;}
+h2{
+  font-size:12px;
+  color:var(--text-muted);
+  font-family:var(--mono);
+  letter-spacing:0.01em;
+  margin:0 0 12px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--line);
+  font-weight:500;
+}
+
+.req-list{list-style:none; margin:0; padding:0;}
+.req-list li{
+  display:flex;
+  gap:10px;
+  padding:9px 0;
+  border-bottom:1px solid var(--line-soft);
+  font-size:14.5px;
+}
+.req-list li:last-child{border-bottom:none;}
+.req-list .tick{color:var(--teal); font-family:var(--mono); flex-shrink:0;}
+.money-list .tick{color:var(--amber);}
+
+.stack-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:10px;}
+table.stack{width:100%; border-collapse:collapse; font-size:13.5px; min-width:660px;}
+table.stack th{
+  text-align:left;
+  font-family:var(--mono);
+  font-weight:500;
+  font-size:11.5px;
+  color:var(--text-dim);
+  padding:10px 14px;
+  background:var(--panel);
+  border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+table.stack td{padding:12px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--text-muted);}
+table.stack tr:last-child td{border-bottom:none;}
+table.stack td.layer{color:var(--text); font-weight:600; white-space:nowrap;}
+table.stack td.pick{color:var(--amber);}
+
+.day{
+  border:1px solid var(--line);
+  border-radius:10px;
+  margin-bottom:10px;
+  background:var(--panel);
+  overflow:hidden;
+}
+.day-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  cursor:pointer;
+  user-select:none;
+  list-style:none;
+}
+.day-head::-webkit-details-marker{display:none;}
+.day-head .dcount{font-family:var(--mono); font-size:11px; color:var(--text-dim); flex-shrink:0; width:58px;}
+.day-head .dtitle{font-weight:600; font-size:15px; flex:1;}
+.day-head .dprog{font-family:var(--mono); font-size:12px; color:var(--text-muted); font-variant-numeric:tabular-nums; flex-shrink:0;}
+.day-head .chev{font-size:12px; color:var(--text-dim); flex-shrink:0; transition:transform 0.2s ease;}
+details[open] .chev{transform:rotate(90deg);}
+.day-body-inner{padding:2px 16px 14px; border-top:1px solid var(--line-soft);}
+.today-flag{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--bg);
+  background:var(--amber);
+  padding:2px 7px;
+  border-radius:4px;
+  margin-left:8px;
+  font-weight:600;
+}
+
+.check-item{display:flex; gap:10px; padding:8px 0; align-items:flex-start;}
+.mark{
+  flex-shrink:0;
+  width:16px; height:16px;
+  border-radius:5px;
+  margin-top:2px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px;
+  font-family:var(--mono);
+  line-height:1;
+}
+.mark.done{background:var(--teal); color:var(--bg);}
+.mark.pending{border:1px solid var(--line); color:transparent;}
+.check-item .item-text{font-size:14px;}
+.check-item.done .item-text{color:var(--text-dim);}
+.item-note{display:block; font-size:12.5px; color:var(--text-muted); margin-top:2px;}
+.item-note code{
+  background:var(--panel-raised);
+  border:1px solid var(--line);
+  padding:1px 5px;
+  border-radius:4px;
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:var(--periwinkle);
+}
+
+pre{
+  background:#0A0B0F;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:14px 16px;
+  overflow-x:auto;
+  font-family:var(--mono);
+  font-size:12.5px;
+  line-height:1.6;
+  color:#C9CCD6;
+  margin:10px 0 18px;
+}
+pre .cm{color:var(--text-dim);}
+.snippet-label{font-family:var(--mono); font-size:11.5px; color:var(--text-dim); margin-bottom:-4px;}
+
+.reset-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-top:8px;
+  padding-top:16px;
+  border-top:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.foot-note{font-size:12px; color:var(--text-dim);}
+</style>
+
+<div class="wrap">
+
+<div class="eyebrow">HH Goa 2026 &middot; Partner Trials &middot; Task #3</div>
+<h1>Face ID + Blockchain Verification</h1>
+<p class="subhead">A pipeline that detects a face, finds a genuine social media match through reverse-image search, and anchors that match on-chain as a tamper-evident record. Every tool picked below has a real $0 tier, no card, no crypto spend.</p>
+
+<div class="truth-strip">
+  <div class="truth-left">
+    <span><strong>Ground truth:</strong> this page is edited and republished by hand alongside the repo, it does not save clicks</span>
+    <span class="dot">&bull;</span>
+    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">repo</a></span>
+    <span class="dot">&bull;</span>
+    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/decisions.md" target="_blank" rel="noopener">7 decisions logged</a></span>
+    <span class="dot">&bull;</span>
+    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/HANDOFF.md" target="_blank" rel="noopener">handoff notes</a></span>
+  </div>
+  <div>Last synced Sep 2, 2026</div>
+</div>
+
+<div class="status-row">
+  <div class="status-card">
+    <div class="status-label">Closes</div>
+    <div class="status-value">Sep 7, 11:59 PM IST</div>
+  </div>
+  <div class="status-card">
+    <div class="status-label">Time left</div>
+    <div class="status-value" id="countdown">-</div>
+  </div>
+  <div class="status-card">
+    <div class="status-label">Progress</div>
+    <div class="status-value" id="progressText">2 / 56</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:3.6%"></div></div>
+  </div>
+</div>
+
+<div class="pipeline" id="pipeline"></div>
+
+<section class="block">
+<h2>what the brief actually asks for</h2>
+<ul class="req-list" id="reqList"></ul>
+</section>
+
+<section class="block">
+<h2>$0 build, the rules that keep it that way</h2>
+<ul class="req-list money-list" id="moneyList"></ul>
+</section>
+
+<section class="block">
+<h2>tech stack, the calls we're making and why</h2>
+<div class="stack-scroll">
+<table class="stack">
+<thead><tr><th>Layer</th><th>Pick</th><th>Why this one</th><th>Fallback</th></tr></thead>
+<tbody id="stackBody"></tbody>
+</table>
+</div>
+</section>
+
+<section class="block">
+<h2>day-by-day build log</h2>
+<div id="days"></div>
+</section>
+
+<section class="block">
+<h2>reference snippets</h2>
+<div class="snippet-label">contracts/FaceRecord.sol</div>
+<pre>// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract FaceRecord {
+  struct Record {
+    bytes32 recordHash;
+    string metadataURI;
+    address submitter;
+    uint256 timestamp;
+  }
+
+  mapping(bytes32 =&gt; Record) public records;
+
+  event RecordStored(
+    address indexed submitter,
+    bytes32 indexed recordHash,
+    string metadataURI,
+    uint256 timestamp
+  );
+
+  function storeRecord(bytes32 recordHash, string calldata metadataURI) external {
+    records[recordHash] = Record(recordHash, metadataURI, msg.sender, block.timestamp);
+    emit RecordStored(msg.sender, recordHash, metadataURI, block.timestamp);
+  }
+
+  function getRecord(bytes32 recordHash) external view returns (Record memory) {
+    return records[recordHash];
+  }
+}</pre>
+
+<div class="snippet-label">planned module layout (src/pipeline/, see decisions.md)</div>
+<pre><span class="cm"># main.py --image photo.jpg chains these in order:</span>
+detect.py   <span class="cm">detect_and_encode(image_path) -&gt; FaceEncoding</span>
+search.py   <span class="cm">reverse_search(image_path) -&gt; list[Candidate]</span>
+verify.py   <span class="cm">verify_candidates(image_path, candidates) -&gt; Match</span>
+anchor.py   <span class="cm">build_record(...), anchor_record(record) -&gt; tx_hash</span>
+proof.py    <span class="cm">read_record(record_hash) -&gt; on-chain Record, used by verify_record.py</span></pre>
+
+<div class="snippet-label">.env.example</div>
+<pre>SERPAPI_KEY=
+SERPER_API_KEY= <span class="cm"># optional backup, no card, 2,500 free one-time queries</span>
+ALCHEMY_AMOY_RPC_URL=
+WALLET_PRIVATE_KEY= <span class="cm"># burner wallet only, funded from a testnet faucet, never real funds</span>
+CONTRACT_ADDRESS=
+PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span></pre>
+</section>
+
+<section class="block">
+<h2>README checklist</h2>
+<div id="readmeList"></div>
+</section>
+
+<section class="block">
+<h2>known limitations, write these into the README</h2>
+<div id="limitList"></div>
+</section>
+
+<section class="block">
+<h2>final submission check</h2>
+<div id="finalList"></div>
+</section>
+
+<div class="reset-row">
+  <span class="foot-note">Static snapshot, republished by hand each session. State lives in the repo's docs/decisions.md and docs/HANDOFF.md.</span>
+  <span class="foot-note">Face ID + Blockchain Verification</span>
+</div>
+
+</div>
+
+<script>
+(function(){
+  const DONE = new Set(['d0-1','d0-2']);
+
+  const PIPELINE = [
+    {n:'01', c:'c-amber', t:'Input &amp; Encode', d:'Detect the face, turn it into an embedding'},
+    {n:'02', c:'c-teal', t:'Reverse Search', d:'Find where that face shows up on the public web'},
+    {n:'03', c:'c-teal', t:'Verify Match', d:"Confirm it's genuinely the same face, not just similar"},
+    {n:'04', c:'c-peri', t:'Anchor On-Chain', d:'Hash the record, write it to a smart contract'},
+    {n:'05', c:'c-peri', t:'Prove It', d:'Read the chain back and confirm nothing was altered'},
+  ];
+
+  const REQUIREMENTS = [
+    'Detect and encode a face from an input image, any library or API works',
+    'Find at least one real, matching social media post via genuine reverse-image search, no hardcoded results',
+    "Upload the match's data to a blockchain for a tamper-evident, verifiable record",
+    "No website or hosting needed, the pipeline itself is what gets judged",
+    'Source on GitHub: functionality, how to run it, which blockchain, and known limitations',
+    'An unedited screen recording of the full pipeline running end to end',
+  ];
+
+  const MONEY_RULES = [
+    "Never enter a card on any signup for this project. Every tool below has a genuine no-card free tier, and if something asks for billing details, that's the signal to switch to the fallback",
+    'The wallet only ever holds testnet POL from a faucet. Never bridge, buy, or send real MATIC, POL, or ETH into it',
+    "Skip FaceCheck.id and PimEyes entirely. Both need a real payment (crypto or card) before results are usable, so they don't fit a $0 build",
+    "Stay under each free API's monthly cap. If SerpApi's 250 free searches run out, switch to Serper.dev's one-time 2,500 free queries rather than upgrading a paid plan",
+    'IPFS/Pinata pinning is optional polish, not a requirement. Skip it for one less signup, since the SHA-256 hash on-chain already satisfies the task',
+    "Screen record with what's already on your machine: OBS Studio (free, open source) or Windows' built-in Game Bar (Win+G). No paid recorder needed",
+  ];
+
+  const STACK = [
+    ['Face detect + encode','DeepFace (Python): RetinaFace + ArcFace','One-line API, swappable backends, free, fully self-hosted, no signup at all','face_recognition (dlib) if install gives you trouble'],
+    ['Reverse image search','SerpApi: Google Lens engine','Genuine Google reverse-image results, 250 free searches/month, no card required','Serper.dev, 2,500 free one-time queries, no card, if you need more headroom'],
+    ['Match verification','DeepFace.verify() on every candidate',"This is what turns a visually similar hit into a genuine face match, runs locally for free",'—'],
+    ['Blockchain','Polygon Amoy testnet via Alchemy RPC + web3.py','Free forever, no card, ~2s finality, full Solidity support, PolygonScan lets judges verify independently',"Chainstack's free Developer RPC plan (also no card), if Alchemy ever asks for billing info"],
+    ['Smart contract','Minimal Solidity: storeRecord() + event + getRecord()','Gives judges an actual on-chain function to point at, not a raw calldata blob. Deploy free via Remix in the browser','A plain tx with the hash in calldata, if time is short'],
+    ['Off-chain storage','Pin the full record JSON to IPFS via Pinata (free tier, no card)','Keeps the chain write cheap while the full record stays immutable and content-addressed','Skip IPFS entirely, the on-chain hash alone already satisfies the requirement'],
+    ['Wallet','Brand-new burner MetaMask wallet','Funded only via testnet faucet, zero real funds ever touch this project','—'],
+  ];
+
+  const DAYS = [
+    {id:'day0', date:'Sep 2', title:'Foundations', items:[
+      {id:'d0-1', text:'Create the GitHub repo (public), add a README stub, .gitignore, LICENSE'},
+      {id:'d0-2', text:'Set up Python 3.10+ venv, install deepface, opencv-python, retina-face, requests, web3, python-dotenv'},
+      {id:'d0-3', text:'Create a SerpApi account and grab the API key', note:'confirm the 250 free searches/month is active'},
+      {id:'d0-4', text:'Create an Alchemy account, spin up a Polygon Amoy app, copy the RPC URL'},
+      {id:'d0-5', text:'Create a brand-new burner MetaMask wallet just for this project, fund it from the Amoy faucet', note:'testnet POL only, never send real funds to this wallet'},
+      {id:'d0-6', text:'Pick 1-2 consenting test subjects with a real, findable public social presence', note:'yourself is the easiest option'},
+      {id:'d0-7', text:'Sanity-check every signup before entering details', note:'if a form asks for a card, stop and use the free fallback instead'},
+    ]},
+    {id:'day1', date:'Sep 3', title:'Face detection + encoding', items:[
+      {id:'d1-1', text:'Write detect_and_encode(image_path) using DeepFace', note:'<code>detector_backend="retinaface"</code>, <code>model_name="ArcFace"</code>'},
+      {id:'d1-2', text:'Handle zero-face and multi-face cases, pick the largest / most confident box'},
+      {id:'d1-3', text:'Test on 3-5 sample photos with different lighting and angles'},
+      {id:'d1-4', text:'Return a clean object: embedding vector + bounding box + confidence score'},
+    ]},
+    {id:'day2', date:'Sep 4', title:'Reverse search + verification', items:[
+      {id:'d2-1', text:"Send the source image to SerpApi's Google Lens engine, pull the visual matches"},
+      {id:'d2-2', text:'Filter results down to social-media domains', note:'instagram, x.com/twitter, facebook, linkedin, tiktok, reddit, youtube'},
+      {id:'d2-3', text:'Download each candidate image, re-run DeepFace.verify() against the source embedding'},
+      {id:'d2-4', text:'Keep only candidates above your similarity threshold, pick the best-scoring genuine match'},
+      {id:'d2-5', text:'Log the winning match: url, platform, similarity score, model used'},
+    ]},
+    {id:'day3', date:'Sep 5', title:'Blockchain anchoring', items:[
+      {id:'d3-1', text:'Write the minimal Solidity contract', note:'storeRecord(), a RecordStored event, getRecord() view, see snippet above'},
+      {id:'d3-2', text:'Deploy it to Polygon Amoy via Remix + your burner wallet'},
+      {id:'d3-3', text:'Build the match record JSON', note:'image hash, match url, platform, score, model, UTC timestamp'},
+      {id:'d3-4', text:'Hash the record (SHA-256), call storeRecord() via web3.py'},
+      {id:'d3-5', text:'Optional: pin the full record JSON to IPFS via Pinata, store the CID as metadataURI'},
+      {id:'d3-6', text:'Confirm the transaction on Amoy PolygonScan, save the tx hash'},
+    ]},
+    {id:'day4', date:'Sep 6', title:'Verification tooling + docs', items:[
+      {id:'d4-1', text:'Write verify_record.py, given a tx hash, pull the on-chain hash, recompute the local hash, confirm they match'},
+      {id:'d4-2', text:'Wire it into one CLI entrypoint', note:'<code>python main.py --image photo.jpg</code> runs the full pipeline end to end'},
+      {id:'d4-3', text:'Add error handling + retries for flaky API calls'},
+      {id:'d4-4', text:'Write the README', note:'see the checklist below'},
+      {id:'d4-5', text:'Add .env.example, pin versions in requirements.txt, double-check no secrets are committed'},
+    ]},
+    {id:'day5', date:'Sep 7', title:'Record + submit, deadline day', items:[
+      {id:'d5-1', text:'Clone your own repo into a clean folder and follow your own README exactly, fix anything that breaks'},
+      {id:'d5-2', text:'Record one unedited take: terminal running the pipeline, match found, PolygonScan confirming the tx'},
+      {id:'d5-3', text:'Upload the recording (unlisted YouTube / Drive / Loom), link it in the README'},
+      {id:'d5-4', text:'Final commit, push, confirm the repo is public'},
+      {id:'d5-5', text:"Submit a few hours before 11:59 PM IST, don't cut it to the wire"},
+    ]},
+  ];
+
+  const README_ITEMS = [
+    'Overview + one-paragraph explanation of the pipeline',
+    'Architecture diagram or ASCII flow: photo, detect, search, verify, chain, proof',
+    'Features mapped directly to the 3 core requirements',
+    'Tech stack table',
+    'Setup / install steps, tested from a clean clone',
+    'Configuration: exact env vars needed, with an .env.example',
+    'How to run: one command',
+    'Example output: sample console log + tx hash + explorer link',
+    'Which blockchain, and why',
+    'Known limitations (see below)',
+    'Consent / ethics note',
+    'Link to the demo recording, and license',
+  ];
+
+  const LIMIT_ITEMS = [
+    "Search coverage is limited to what the search engine has indexed, it won't find everything, especially recent or private posts",
+    "Match accuracy depends on the embedding model and the input photo's quality (angle, lighting, occlusion)",
+    "The blockchain proves the record's hash existed at a specific block and time. It's a tamper-evident timestamp of the claim, not proof the matched content itself is authentic",
+    'No liveness or deepfake detection on the input photo',
+    "Run only with consenting subjects, face search tools' terms of service restrict use for employment, credit, insurance, or tenant-screening decisions",
+    'State plainly which network (testnet vs mainnet) was used and why that trade-off was made',
+    "Note the search API's rate limits / cost ceiling, free tier size, or per-search cost if using a paid engine",
+  ];
+
+  const FINAL_ITEMS = [
+    'All 3 core deliverables demonstrably work end to end',
+    'Repo is public and cloneable',
+    'README has every required section',
+    'Recording is unedited, shows the full run, and is linked',
+    'Submitted before Sep 7, 11:59 PM IST',
+  ];
+
+  function allItemIds(){
+    let ids = [];
+    DAYS.forEach(d=>d.items.forEach(i=>ids.push(i.id)));
+    README_ITEMS.forEach((_,i)=>ids.push('readme-'+i));
+    LIMIT_ITEMS.forEach((_,i)=>ids.push('limit-'+i));
+    FINAL_ITEMS.forEach((_,i)=>ids.push('final-'+i));
+    return ids;
+  }
+
+  const pipelineEl = document.getElementById('pipeline');
+  PIPELINE.forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'pstage ' + s.c;
+    div.innerHTML = `<div class="pnum">${s.n}</div><div class="ptitle">${s.t}</div><div class="pdesc">${s.d}</div>`;
+    pipelineEl.appendChild(div);
+  });
+
+  const reqEl = document.getElementById('reqList');
+  REQUIREMENTS.forEach(r=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="tick">&gt;</span><span>${r}</span>`;
+    reqEl.appendChild(li);
+  });
+
+  const moneyEl = document.getElementById('moneyList');
+  MONEY_RULES.forEach(r=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="tick">$0</span><span>${r}</span>`;
+    moneyEl.appendChild(li);
+  });
+
+  const stackBody = document.getElementById('stackBody');
+  STACK.forEach(row=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="layer">${row[0]}</td><td class="pick">${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
+    stackBody.appendChild(tr);
+  });
+
+  function renderMark(done){
+    return `<span class="mark ${done ? 'done' : 'pending'}">${done ? '✓' : ''}</span>`;
+  }
+
+  function renderCheckList(containerId, items, idPrefix){
+    const container = document.getElementById(containerId);
+    items.forEach((text, i)=>{
+      const id = idPrefix + i;
+      const done = DONE.has(id);
+      const row = document.createElement('div');
+      row.className = 'check-item' + (done ? ' done' : '');
+      row.innerHTML = `${renderMark(done)}<div><span class="item-text">${text}</span></div>`;
+      container.appendChild(row);
+    });
+  }
+
+  function renderDays(){
+    const container = document.getElementById('days');
+    const fixedStart = new Date(Date.UTC(2026,8,2));
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    let dayIndex = Math.floor((todayUTC - fixedStart) / 86400000);
+    if (dayIndex < 0) dayIndex = 0;
+    if (dayIndex > 5) dayIndex = 5;
+
+    DAYS.forEach((day, idx)=>{
+      const done = day.items.filter(i=>DONE.has(i.id)).length;
+      const total = day.items.length;
+      const isToday = idx === dayIndex;
+      const details = document.createElement('details');
+      details.className = 'day';
+      if (isToday) details.open = true;
+
+      const summary = document.createElement('summary');
+      summary.className = 'day-head';
+      summary.innerHTML = `
+        <span class="dcount">${day.date}</span>
+        <span class="dtitle">${day.title}${isToday ? '<span class="today-flag">today</span>' : ''}</span>
+        <span class="dprog">${done}/${total}</span>
+        <span class="chev">&gt;</span>
+      `;
+      details.appendChild(summary);
+
+      const inner = document.createElement('div');
+      inner.className = 'day-body-inner';
+      day.items.forEach(item=>{
+        const isDone = DONE.has(item.id);
+        const row = document.createElement('div');
+        row.className = 'check-item' + (isDone ? ' done' : '');
+        row.innerHTML = `${renderMark(isDone)}<div><span class="item-text">${item.text}</span>${item.note ? `<span class="item-note">${item.note}</span>` : ''}</div>`;
+        inner.appendChild(row);
+      });
+      details.appendChild(inner);
+      container.appendChild(details);
+    });
+  }
+
+  renderDays();
+  renderCheckList('readmeList', README_ITEMS, 'readme-');
+  renderCheckList('limitList', LIMIT_ITEMS, 'limit-');
+  renderCheckList('finalList', FINAL_ITEMS, 'final-');
+
+  const ids = allItemIds();
+  const total = ids.length;
+  const done = ids.filter(id=>DONE.has(id)).length;
+  document.getElementById('progressText').textContent = done + ' / ' + total;
+  document.getElementById('progressFill').style.width = (total ? (done/total*100) : 0) + '%';
+
+  const deadline = new Date('2026-09-07T23:59:59+05:30');
+  function tick(){
+    const now = new Date();
+    let diff = deadline - now;
+    const el = document.getElementById('countdown');
+    if (diff <= 0){ el.textContent = 'Closed'; el.classList.add('warn'); return; }
+    const d = Math.floor(diff / 86400000); diff -= d*86400000;
+    const h = Math.floor(diff / 3600000); diff -= h*3600000;
+    const m = Math.floor(diff / 60000); diff -= m*60000;
+    const s = Math.floor(diff / 1000);
+    el.textContent = `${d}d ${h}h ${m}m ${s}s`;
+    if (d < 1) el.classList.add('warn'); else el.classList.remove('warn');
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>

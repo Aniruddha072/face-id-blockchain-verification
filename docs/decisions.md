@@ -44,10 +44,13 @@ naming and keeps the proof step usable without re-running the whole
 pipeline. CLI parsing is argparse (stdlib), no third-party dependency for a
 two-flag surface.
 
-## 2026-09-02 — Docs/artifact sync adopted, mirrored into the published artifact
+## 2026-09-02 - Build-log tracker: separate rebuilt page instead of mirroring the original
 
-Decision log (this file) and `docs/HANDOFF.md` are the real source of truth,
-maintained every session. In addition, the published build-log artifact's
-checkboxes get mirrored via browser automation at the end of each session,
-so the artifact's own view stays visually accurate too (its checked state
-persists per-browser, this repo's docs are what's actually authoritative).
+Decision log (this file) and `docs/HANDOFF.md` are the real source of
+truth, updated every session. First plan was to mirror progress into the
+originally-shared build-log page's own checkboxes via browser automation.
+Changed instead to maintaining a separate rebuilt copy of that same tracker
+(source at `docs/build-log.html`, hosted outside this repo), with progress
+baked directly into the page's data (a `DONE` set of item ids) rather than
+client-side checkbox storage, so it can be edited and republished directly
+without any browser step. The original page is left untouched.
