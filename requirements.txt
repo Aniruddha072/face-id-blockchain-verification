@@ -5,3 +5,4 @@ tf-keras
 requests
 web3
 python-dotenv
+py-solc-x
