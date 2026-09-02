@@ -16,3 +16,7 @@ class NoVerifiedMatchError(PipelineError):
 
 class ChainError(PipelineError):
     """Raised when a blockchain read or write fails after retries are exhausted."""
+
+
+class ConfigError(PipelineError):
+    """Raised when a required .env setting is missing."""
