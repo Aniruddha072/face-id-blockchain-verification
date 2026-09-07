@@ -20,3 +20,9 @@ Thumbs.db
 # Logs / output
 *.log
 output/
+
+# Local test photos, never committed
+My-pic-test.jpg
+*.jpg
+*.jpeg
+*.png

@@ -1,7 +1,7 @@
 from web3 import Web3
 
 from . import config
-from .contract import compile_contract
+from .contract import compile_contract, get_web3
 from .exceptions import ChainError
 from .retry import with_retry
 
@@ -11,7 +11,7 @@ def read_record(record_hash: bytes) -> dict:
     config.require("ALCHEMY_AMOY_RPC_URL", "CONTRACT_ADDRESS")
 
     abi, _ = compile_contract()
-    w3 = Web3(Web3.HTTPProvider(config.ALCHEMY_AMOY_RPC_URL))
+    w3 = get_web3(config.ALCHEMY_AMOY_RPC_URL)
     contract = w3.eth.contract(
         address=Web3.to_checksum_address(config.CONTRACT_ADDRESS), abi=abi
     )

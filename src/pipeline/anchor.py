@@ -5,7 +5,7 @@ import time
 from web3 import Web3
 
 from . import config
-from .contract import compile_contract
+from .contract import compile_contract, get_web3
 from .exceptions import ChainError
 from .retry import with_retry
 from .verify import Match
@@ -34,7 +34,7 @@ def anchor_record(record: dict, metadata_uri: str = "") -> str:
     config.require("ALCHEMY_AMOY_RPC_URL", "WALLET_PRIVATE_KEY", "CONTRACT_ADDRESS")
 
     abi, _ = compile_contract()
-    w3 = Web3(Web3.HTTPProvider(config.ALCHEMY_AMOY_RPC_URL))
+    w3 = get_web3(config.ALCHEMY_AMOY_RPC_URL)
     account = w3.eth.account.from_key(config.WALLET_PRIVATE_KEY)
     contract = w3.eth.contract(
         address=Web3.to_checksum_address(config.CONTRACT_ADDRESS), abi=abi
@@ -42,10 +42,16 @@ def anchor_record(record: dict, metadata_uri: str = "") -> str:
     h = record_hash(record)
 
     def _call():
+        gas_price = w3.eth.gas_price
+        gas_estimate = contract.functions.storeRecord(
+            h, metadata_uri
+        ).estimate_gas({"from": account.address})
         tx = contract.functions.storeRecord(h, metadata_uri).build_transaction(
             {
                 "from": account.address,
                 "nonce": w3.eth.get_transaction_count(account.address),
+                "gas": int(gas_estimate * 1.05),
+                "gasPrice": gas_price,
             }
         )
         signed = account.sign_transaction(tx)

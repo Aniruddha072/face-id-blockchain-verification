@@ -6,10 +6,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
-from web3 import Web3  # noqa: E402
-
 from pipeline import config  # noqa: E402
-from pipeline.contract import compile_contract  # noqa: E402
+from pipeline.contract import compile_contract, get_web3  # noqa: E402
 
 
 def deploy() -> str:
@@ -17,14 +15,18 @@ def deploy() -> str:
 
     abi, bytecode = compile_contract()
 
-    w3 = Web3(Web3.HTTPProvider(config.ALCHEMY_AMOY_RPC_URL))
+    w3 = get_web3(config.ALCHEMY_AMOY_RPC_URL)
     account = w3.eth.account.from_key(config.WALLET_PRIVATE_KEY)
 
     face_record = w3.eth.contract(abi=abi, bytecode=bytecode)
+    gas_price = w3.eth.gas_price
+    gas_estimate = face_record.constructor().estimate_gas({"from": account.address})
     tx = face_record.constructor().build_transaction(
         {
             "from": account.address,
             "nonce": w3.eth.get_transaction_count(account.address),
+            "gas": int(gas_estimate * 1.05),
+            "gasPrice": gas_price,
         }
     )
     signed = account.sign_transaction(tx)
