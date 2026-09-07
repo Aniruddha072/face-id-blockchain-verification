@@ -7,6 +7,9 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+
 from pipeline.anchor import anchor_record, build_record, record_hash  # noqa: E402
 from pipeline.detect import detect_and_encode  # noqa: E402
 from pipeline.exceptions import PipelineError  # noqa: E402
@@ -53,6 +56,8 @@ def main() -> None:
         run(args.image)
     except PipelineError as exc:
         print(f"pipeline failed: {exc}", file=sys.stderr)
+        if exc.__cause__:
+            print(f"caused by: {exc.__cause__}", file=sys.stderr)
         sys.exit(1)
 
 
