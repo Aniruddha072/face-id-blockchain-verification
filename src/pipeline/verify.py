@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import requests
 from deepface import DeepFace
 
-from .detect import MODEL_NAME
+from .detect import DETECTOR_BACKEND, MODEL_NAME
 from .exceptions import NoVerifiedMatchError
 from .retry import with_retry
 from .search import Candidate
@@ -50,7 +50,10 @@ def verify_candidates(image_path: str, candidates: list[Candidate]) -> Match:
 
         try:
             result = DeepFace.verify(
-                img1_path=image_path, img2_path=thumb_path, model_name=MODEL_NAME
+                img1_path=image_path,
+                img2_path=thumb_path,
+                model_name=MODEL_NAME,
+                detector_backend=DETECTOR_BACKEND,
             )
         except Exception:
             continue
