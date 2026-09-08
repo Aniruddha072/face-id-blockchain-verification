@@ -28,7 +28,7 @@ photo -> detect & encode -> reverse-image search -> verify match -> hash + ancho
 |---|---|
 | Detect and encode a face from an input image | DeepFace (RetinaFace detector + ArcFace embedding) |
 | Find at least one real, matching social media post via genuine reverse-image search | SerpApi Google Lens engine, filtered to social domains, no hardcoded results |
-| Upload the match's data to a blockchain for a tamper-evident, verifiable record | SHA-256 hash of the match record written to a Solidity contract on Polygon Amoy testnet |
+| Upload the match's data to a blockchain for a tamper-evident, verifiable record | SHA-256 hash of the match record written to a Solidity contract on Polygon Amoy testnet, independently checkable on PolygonScan |
 
 ## Tech stack
 
@@ -37,8 +37,8 @@ photo -> detect & encode -> reverse-image search -> verify match -> hash + ancho
 | Face detect + encode | DeepFace (Python), RetinaFace + ArcFace | One-line API, swappable backends, free, self-hosted |
 | Reverse image search | SerpApi, Google Lens engine | Genuine Google reverse-image results, 250 free searches/month, no card |
 | Match verification | `DeepFace.verify()` on every candidate | Confirms a genuine face match, runs locally for free |
-| Blockchain | Polygon Amoy testnet via Alchemy RPC + web3.py | Free, no card, ~2s finality, PolygonScan lets judges verify independently |
-| Smart contract | Minimal Solidity: `storeRecord()` + event + `getRecord()` | Gives judges an on-chain function to point at |
+| Blockchain | Polygon Amoy testnet via Alchemy RPC + web3.py | Free, no card, ~2s finality, PolygonScan lets anyone verify independently |
+| Smart contract | Minimal Solidity: `storeRecord()` + event + `getRecord()` | Gives reviewers an on-chain function to point at, not a raw calldata blob |
 | Contract deployment | `deploy.py`, compiles via py-solc-x and deploys with web3.py | One command instead of a manual Remix step, same wallet key `main.py` already needs |
 | Off-chain storage (optional) | Pinata (IPFS) | Keeps the full record content-addressed; skippable |
 | Wallet | Burner MetaMask wallet, testnet POL only | Zero real funds ever touch this project |
@@ -108,7 +108,7 @@ explorer link once the pipeline runs end to end)*
 
 Polygon Amoy testnet, accessed via an Alchemy RPC endpoint. Chosen because it
 has a genuine no-card free tier, roughly 2 second block finality, full
-Solidity support, and PolygonScan gives judges an independent way to verify
+Solidity support, and PolygonScan gives anyone an independent way to verify
 the on-chain record without trusting this repo's output.
 
 ## Known limitations

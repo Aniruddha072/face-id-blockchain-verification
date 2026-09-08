@@ -80,3 +80,40 @@ Changed instead to maintaining a separate rebuilt copy of that same tracker
 baked directly into the page's data (a `DONE` set of item ids) rather than
 client-side checkbox storage, so it can be edited and republished directly
 without any browser step. The original page is left untouched.
+
+## 2026-09-07 - First live run: three environment gotchas on Windows + Amoy
+
+Getting the pipeline to actually run end to end for the first time (past
+the synthetic/offline checks from Day 1-4) surfaced three real bugs, all
+filed and closed as issues #4-#7:
+
+- web3.py's default validation middleware rejects Polygon's block headers
+  (they carry more than the 32 bytes of extraData it expects), and its
+  default EIP-1559 fee estimate overshoots what a transaction actually
+  costs on Amoy. Fixed with a shared `get_web3()` in `pipeline/contract.py`
+  that injects the POA middleware, and explicit gas/gasPrice on every
+  transaction instead of trusting the defaults.
+- Windows' default console encoding can't print a character DeepFace's
+  logger writes during its one-time model-weight download, which crashed
+  and got misreported by our own error handling as "no face detected."
+  Fixed by reconfiguring stdout/stderr to utf-8 in both entrypoints, and by
+  surfacing the chained exception cause instead of swallowing it.
+- `DeepFace.verify()` defaults to the opencv detector backend, and the
+  pinned opencv-python version doesn't ship the Haar cascade file that
+  backend needs, so every candidate failed verification regardless of
+  whether it was a real match. Fixed by passing `detector_backend`
+  explicitly in verify.py, matching detect.py's retinaface choice.
+
+None of this was visible in offline testing since nothing touched a real
+RPC endpoint, a real console encoding, or a real downloaded photo until
+today. Contract is now live on Amoy at
+0x80637a622EF860a85c3510b77eb832F356ed08DD, deployed via deploy.py.
+
+## 2026-09-08 - Missed the submission window, continuing as a portfolio piece
+
+The hackathon's Sep 7, 11:59 PM IST deadline passed without a submission.
+Decided to keep finishing the project anyway since the pipeline itself
+works and is worth having as a resume/portfolio piece. Dropped the
+deadline countdown and "judges" framing from the README and build-log
+tracker; both now describe the project on its own terms rather than as an
+active submission. No functional changes to the pipeline from this.

@@ -278,9 +278,9 @@ pre .cm{color:var(--text-dim);}
 
 <div class="wrap">
 
-<div class="eyebrow">HH Goa 2026 &middot; Partner Trials &middot; Task #3</div>
+<div class="eyebrow">Originally built for HH Goa 2026, Partner Trials, Task #3 &middot; now a portfolio project</div>
 <h1>Face ID + Blockchain Verification</h1>
-<p class="subhead">A pipeline that detects a face, finds a genuine social media match through reverse-image search, and anchors that match on-chain as a tamper-evident record. Every tool picked below has a real $0 tier, no card, no crypto spend.</p>
+<p class="subhead">A pipeline that detects a face, finds a genuine social media match through reverse-image search, and anchors that match on-chain as a tamper-evident record. Every tool picked below has a real $0 tier, no card, no crypto spend. The hackathon submission window passed without a submission, but the pipeline works, so the build continued.</p>
 
 <div class="truth-strip">
   <div class="truth-left">
@@ -288,26 +288,22 @@ pre .cm{color:var(--text-dim);}
     <span class="dot">&bull;</span>
     <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">repo</a></span>
     <span class="dot">&bull;</span>
-    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/decisions.md" target="_blank" rel="noopener">9 decisions logged</a></span>
+    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/decisions.md" target="_blank" rel="noopener">10 decisions logged</a></span>
     <span class="dot">&bull;</span>
     <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/HANDOFF.md" target="_blank" rel="noopener">handoff notes</a></span>
   </div>
-  <div>Last synced Sep 2, 2026</div>
+  <div>Last synced Sep 7, 2026</div>
 </div>
 
 <div class="status-row">
   <div class="status-card">
-    <div class="status-label">Closes</div>
-    <div class="status-value">Sep 7, 11:59 PM IST</div>
-  </div>
-  <div class="status-card">
-    <div class="status-label">Time left</div>
-    <div class="status-value" id="countdown">-</div>
+    <div class="status-label">Status</div>
+    <div class="status-value" style="font-size:15px;">Portfolio piece, post-hackathon</div>
   </div>
   <div class="status-card">
     <div class="status-label">Progress</div>
-    <div class="status-value" id="progressText">17 / 56</div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:30.4%"></div></div>
+    <div class="status-value" id="progressText">44 / 56</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:78.6%"></div></div>
   </div>
 </div>
 
@@ -399,7 +395,7 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
 </section>
 
 <section class="block">
-<h2>final submission check</h2>
+<h2>final polish check</h2>
 <div id="finalList"></div>
 </section>
 
@@ -412,7 +408,16 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
 
 <script>
 (function(){
-  const DONE = new Set(['d0-1','d0-2','d1-1','d1-2','d1-4','d2-1','d2-2','d2-3','d2-4','d3-1','d3-3','d3-4','d4-1','d4-2','d4-3','d4-4','d4-5']);
+  const DONE = new Set([
+    'd0-1','d0-2','d0-3','d0-4','d0-5','d0-6','d0-7',
+    'd1-1','d1-2','d1-3','d1-4',
+    'd2-1','d2-2','d2-3','d2-4','d2-5',
+    'd3-1','d3-2','d3-3','d3-4','d3-6',
+    'd4-1','d4-2','d4-3','d4-4','d4-5',
+    'readme-0','readme-1','readme-2','readme-3','readme-5','readme-6','readme-8','readme-9','readme-10',
+    'limit-0','limit-1','limit-2','limit-3','limit-4','limit-5','limit-6',
+    'final-0','final-1',
+  ]);
 
   const PIPELINE = [
     {n:'01', c:'c-amber', t:'Input &amp; Encode', d:'Detect the face, turn it into an embedding'},
@@ -444,8 +449,8 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
     ['Face detect + encode','DeepFace (Python): RetinaFace + ArcFace','One-line API, swappable backends, free, fully self-hosted, no signup at all','face_recognition (dlib) if install gives you trouble'],
     ['Reverse image search','SerpApi: Google Lens engine','Genuine Google reverse-image results, 250 free searches/month, no card required','Serper.dev, 2,500 free one-time queries, no card, if you need more headroom'],
     ['Match verification','DeepFace.verify() on every candidate',"This is what turns a visually similar hit into a genuine face match, runs locally for free",'n/a'],
-    ['Blockchain','Polygon Amoy testnet via Alchemy RPC + web3.py','Free forever, no card, ~2s finality, full Solidity support, PolygonScan lets judges verify independently',"Chainstack's free Developer RPC plan (also no card), if Alchemy ever asks for billing info"],
-    ['Smart contract','Minimal Solidity: storeRecord() + event + getRecord()','Gives judges an actual on-chain function to point at, not a raw calldata blob. Deploy free via Remix in the browser','A plain tx with the hash in calldata, if time is short'],
+    ['Blockchain','Polygon Amoy testnet via Alchemy RPC + web3.py','Free forever, no card, ~2s finality, full Solidity support, PolygonScan lets anyone verify independently',"Chainstack's free Developer RPC plan (also no card), if Alchemy ever asks for billing info"],
+    ['Smart contract','Minimal Solidity: storeRecord() + event + getRecord()','Gives a reviewer an actual on-chain function to point at, not a raw calldata blob. Deploy free via Remix in the browser','A plain tx with the hash in calldata, if time is short'],
     ['Off-chain storage','Pin the full record JSON to IPFS via Pinata (free tier, no card)','Keeps the chain write cheap while the full record stays immutable and content-addressed','Skip IPFS entirely, the on-chain hash alone already satisfies the requirement'],
     ['Wallet','Brand-new burner MetaMask wallet','Funded only via testnet faucet, zero real funds ever touch this project','n/a'],
   ];
@@ -488,12 +493,11 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
       {id:'d4-4', text:'Write the README', note:'see the checklist below'},
       {id:'d4-5', text:'Add .env.example, pin versions in requirements.txt, double-check no secrets are committed'},
     ]},
-    {id:'day5', date:'Sep 7', title:'Record + submit, deadline day', items:[
+    {id:'day5', date:'Sep 8+', title:'Polish, no deadline attached', items:[
       {id:'d5-1', text:'Clone your own repo into a clean folder and follow your own README exactly, fix anything that breaks'},
-      {id:'d5-2', text:'Record one unedited take: terminal running the pipeline, match found, PolygonScan confirming the tx'},
-      {id:'d5-3', text:'Upload the recording (unlisted YouTube / Drive / Loom), link it in the README'},
+      {id:'d5-2', text:'Fill in a real example run in the README, using a well-indexed source photo for a convincing match'},
+      {id:'d5-3', text:'Optional: record a short demo and link it, useful for a resume/portfolio even without a submission'},
       {id:'d5-4', text:'Final commit, push, confirm the repo is public'},
-      {id:'d5-5', text:"Submit a few hours before 11:59 PM IST, don't cut it to the wire"},
     ]},
   ];
 
@@ -525,9 +529,9 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
   const FINAL_ITEMS = [
     'All 3 core deliverables demonstrably work end to end',
     'Repo is public and cloneable',
-    'README has every required section',
-    'Recording is unedited, shows the full run, and is linked',
-    'Submitted before Sep 7, 11:59 PM IST',
+    'README has every required section, including a real example run',
+    'Demo recording (optional), if included, is unedited and shows the full run',
+    'Reads well as a standalone portfolio piece, no submission pending',
   ];
 
   function allItemIds(){
@@ -586,26 +590,20 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
 
   function renderDays(){
     const container = document.getElementById('days');
-    const fixedStart = new Date(Date.UTC(2026,8,2));
-    const now = new Date();
-    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    let dayIndex = Math.floor((todayUTC - fixedStart) / 86400000);
-    if (dayIndex < 0) dayIndex = 0;
-    if (dayIndex > 5) dayIndex = 5;
 
-    DAYS.forEach((day, idx)=>{
+    DAYS.forEach((day)=>{
       const done = day.items.filter(i=>DONE.has(i.id)).length;
       const total = day.items.length;
-      const isToday = idx === dayIndex;
+      const isOpen = done < total;
       const details = document.createElement('details');
       details.className = 'day';
-      if (isToday) details.open = true;
+      if (isOpen) details.open = true;
 
       const summary = document.createElement('summary');
       summary.className = 'day-head';
       summary.innerHTML = `
         <span class="dcount">${day.date}</span>
-        <span class="dtitle">${day.title}${isToday ? '<span class="today-flag">today</span>' : ''}</span>
+        <span class="dtitle">${day.title}</span>
         <span class="dprog">${done}/${total}</span>
         <span class="chev">&gt;</span>
       `;
@@ -635,21 +633,5 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
   const done = ids.filter(id=>DONE.has(id)).length;
   document.getElementById('progressText').textContent = done + ' / ' + total;
   document.getElementById('progressFill').style.width = (total ? (done/total*100) : 0) + '%';
-
-  const deadline = new Date('2026-09-07T23:59:59+05:30');
-  function tick(){
-    const now = new Date();
-    let diff = deadline - now;
-    const el = document.getElementById('countdown');
-    if (diff <= 0){ el.textContent = 'Closed'; el.classList.add('warn'); return; }
-    const d = Math.floor(diff / 86400000); diff -= d*86400000;
-    const h = Math.floor(diff / 3600000); diff -= h*3600000;
-    const m = Math.floor(diff / 60000); diff -= m*60000;
-    const s = Math.floor(diff / 1000);
-    el.textContent = `${d}d ${h}h ${m}m ${s}s`;
-    if (d < 1) el.classList.add('warn'); else el.classList.remove('warn');
-  }
-  tick();
-  setInterval(tick, 1000);
 })();
 </script>
