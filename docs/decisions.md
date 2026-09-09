@@ -117,3 +117,44 @@ works and is worth having as a resume/portfolio piece. Dropped the
 deadline countdown and "judges" framing from the README and build-log
 tracker; both now describe the project on its own terms rather than as an
 active submission. No functional changes to the pipeline from this.
+
+## 2026-09-10 - Clean-clone test passed; three portfolio-polish additions planned
+
+Cloned the repo fresh into an isolated folder and followed the README's
+own setup and run steps exactly (venv, pip install, .env, main.py). It
+worked end to end unmodified, confirming the documented setup is accurate
+for a stranger cloning the repo, not just this working copy.
+
+Separately, two real runs against the project owner's own photos both
+verified a false-positive match (a random Facebook video, a random
+LinkedIn post by someone else), each technically under DeepFace's
+distance threshold but visibly wrong on manual inspection. Rather than
+keep chasing a single clean example photo, researched how comparable
+projects handle this and settled on three concrete, zero-cost additions:
+
+- `verify_candidates()` will return the top 3 verified candidates instead
+  of forcing a single best guess, following the pattern used by
+  SchBenedikt/face (a local, open-source PimEyes-style tool): show ranked
+  candidates with their distances rather than one confident pick. Only the
+  best of the three still gets anchored on-chain, keeping the on-chain
+  side of the brief unchanged; the others are surfaced in the console and
+  saved record for transparency.
+- The deployed FaceRecord contract will be verified on PolygonScan (free,
+  no gas, no new signup beyond a normal account). Turns the contract
+  address into readable Solidity source plus a "Read Contract" tab anyone
+  can call `getRecord()` from directly, no wallet needed.
+- The demo will use VHS (charmbracelet/vhs) instead of a manual screen
+  recording: a scripted `.tape` file renders a deterministic terminal GIF,
+  checked into the repo and embedded in the README. No recording software,
+  no video hosting, no signup, and it stays reproducible if the pipeline's
+  output ever changes.
+
+## 2026-09-10 - Working Amoy faucet, for next time
+
+Alchemy's, QuickNode's, and Chainlink's Amoy faucets all gate on holding a
+small mainnet ETH/LINK balance as an anti-bot check, which a fresh burner
+wallet never has. The one that actually works for a brand-new wallet:
+`https://faucet.polygon.technology/` (select Amoy), no mainnet balance
+required, optionally verify via X for a bigger drip. Resets every 24
+hours per wallet. Worth trying this one first before the others next time
+the burner wallet needs topping up.
