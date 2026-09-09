@@ -33,14 +33,20 @@ def _download_to_temp(url: str) -> str:
     return path
 
 
-def verify_candidates(image_path: str, candidates: list[Candidate]) -> Match:
+TOP_N_MATCHES = 3
+
+
+def verify_candidates(image_path: str, candidates: list[Candidate]) -> list[Match]:
     """Confirm which candidates are genuinely the same face as image_path.
 
     Downloads each candidate's thumbnail and runs DeepFace.verify() against
-    the source image, keeping the best-scoring genuine match. A candidate
-    whose thumbnail can't be downloaded or decoded is skipped, not fatal.
+    the source image. Returns up to TOP_N_MATCHES verified matches, ranked
+    by distance (best first), instead of forcing a single best guess: a
+    single automated pick can be confidently wrong, so callers get to see
+    how much (or little) corroboration there is. A candidate whose
+    thumbnail can't be downloaded or decoded is skipped, not fatal.
     """
-    best: Match | None = None
+    verified: list[Match] = []
 
     for candidate in candidates:
         try:
@@ -62,10 +68,10 @@ def verify_candidates(image_path: str, candidates: list[Candidate]) -> Match:
 
         if not result["verified"]:
             continue
-        if best is None or result["distance"] < best.similarity_score:
-            best = Match(candidate=candidate, similarity_score=result["distance"], model=MODEL_NAME)
+        verified.append(Match(candidate=candidate, similarity_score=result["distance"], model=MODEL_NAME))
 
-    if best is None:
+    if not verified:
         raise NoVerifiedMatchError("no candidate verified as a genuine match")
 
-    return best
+    verified.sort(key=lambda m: m.similarity_score)
+    return verified[:TOP_N_MATCHES]

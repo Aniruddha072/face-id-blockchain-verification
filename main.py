@@ -26,18 +26,35 @@ def run(image_path: str) -> dict:
     candidates = reverse_search(image_path)
     print(f"reverse search: {len(candidates)} social-media candidate(s)")
 
-    match = verify_candidates(image_path, candidates)
-    print(
-        f"verified match: {match.candidate.url} "
-        f"(platform={match.candidate.platform}, distance={match.similarity_score:.4f})"
-    )
+    matches = verify_candidates(image_path, candidates)
+    print(f"verified {len(matches)} candidate(s) as genuine matches:")
+    for i, m in enumerate(matches):
+        flag = " (anchoring this one)" if i == 0 else ""
+        print(
+            f"  [{i + 1}] {m.candidate.url} "
+            f"(platform={m.candidate.platform}, distance={m.similarity_score:.4f}){flag}"
+        )
 
-    record = build_record(image_path, match)
+    best = matches[0]
+    record = build_record(image_path, best)
     tx_hash = anchor_record(record)
     print(f"anchored on-chain: tx {tx_hash}")
     print(f"view proof: https://amoy.polygonscan.com/tx/{tx_hash}")
 
-    output = {**record, "record_hash": record_hash(record).hex(), "tx_hash": tx_hash}
+    other_matches = [
+        {
+            "url": m.candidate.url,
+            "platform": m.candidate.platform,
+            "similarity_score": m.similarity_score,
+        }
+        for m in matches[1:]
+    ]
+    output = {
+        **record,
+        "record_hash": record_hash(record).hex(),
+        "tx_hash": tx_hash,
+        "other_verified_candidates": other_matches,
+    }
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     out_path = os.path.join(OUTPUT_DIR, f"{tx_hash}.json")
     with open(out_path, "w") as f:
