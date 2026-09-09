@@ -288,7 +288,7 @@ pre .cm{color:var(--text-dim);}
     <span class="dot">&bull;</span>
     <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">repo</a></span>
     <span class="dot">&bull;</span>
-    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/decisions.md" target="_blank" rel="noopener">13 decisions logged</a></span>
+    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/decisions.md" target="_blank" rel="noopener">14 decisions logged</a></span>
     <span class="dot">&bull;</span>
     <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/HANDOFF.md" target="_blank" rel="noopener">handoff notes</a></span>
   </div>
@@ -302,8 +302,8 @@ pre .cm{color:var(--text-dim);}
   </div>
   <div class="status-card">
     <div class="status-label">Progress</div>
-    <div class="status-value" id="progressText">47 / 58</div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:81.0%"></div></div>
+    <div class="status-value" id="progressText">49 / 58</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:84.5%"></div></div>
   </div>
 </div>
 
@@ -414,9 +414,9 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
     'd2-1','d2-2','d2-3','d2-4','d2-5',
     'd3-1','d3-2','d3-3','d3-4','d3-6',
     'd4-1','d4-2','d4-3','d4-4','d4-5',
-    'd5-1',
+    'd5-1','d5-2',
     'd6-1','d6-2',
-    'readme-0','readme-1','readme-2','readme-3','readme-5','readme-6','readme-8','readme-9','readme-10',
+    'readme-0','readme-1','readme-2','readme-3','readme-5','readme-6','readme-7','readme-8','readme-9','readme-10',
     'limit-0','limit-1','limit-2','limit-3','limit-4','limit-5','limit-6',
     'final-0','final-1',
   ]);
@@ -503,7 +503,7 @@ PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span><
     {id:'day6', date:'Sep 10+', title:'Three portfolio-credibility additions', items:[
       {id:'d6-1', text:'verify_candidates() returns the top 3 verified matches with distances, not a forced single best guess', note:'only the best of the three still gets anchored on-chain; see decisions.md'},
       {id:'d6-2', text:'Verify contracts/FaceRecord.sol source on PolygonScan', note:'free, no gas, gives anyone a Read Contract tab with no wallet needed'},
-      {id:'d6-3', text:'Script a VHS demo.tape, render a deterministic terminal GIF, embed it in the README', note:'replaces manual screen recording entirely'},
+      {id:'d6-3', text:'Record a demo GIF of the pipeline running, embed it in the README', note:'VHS hung on Windows (ttyd dies when spawned by vhs.exe), switched to ScreenToGif'},
       {id:'d6-4', text:'Update the README: multi-candidate output, verified-contract link, demo GIF, real example output'},
     ]},
   ];

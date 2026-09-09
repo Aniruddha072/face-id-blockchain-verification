@@ -10,10 +10,11 @@ verifiable record.
 
 The pipeline runs in five stages. It detects and encodes a face from an
 input photo, finds where that face appears on the public web via
-reverse-image search, verifies each candidate is genuinely the same face
-(not just visually similar), hashes the resulting match record and writes
-it to a smart contract on a public testnet, and finally reads the chain
-back to prove the record hasn't been altered.
+reverse-image search, verifies each candidate against the source photo and
+ranks up to three genuine matches by confidence instead of forcing a single
+guess, hashes the best match's record and writes it to a smart contract on
+a public testnet, and finally reads the chain back to prove the record
+hasn't been altered.
 
 ## Architecture
 
@@ -36,7 +37,7 @@ photo -> detect & encode -> reverse-image search -> verify match -> hash + ancho
 |---|---|---|
 | Face detect + encode | DeepFace (Python), RetinaFace + ArcFace | One-line API, swappable backends, free, self-hosted |
 | Reverse image search | SerpApi, Google Lens engine | Genuine Google reverse-image results, 250 free searches/month, no card |
-| Match verification | `DeepFace.verify()` on every candidate | Confirms a genuine face match, runs locally for free |
+| Match verification | `DeepFace.verify()` on every candidate, top 3 kept and ranked by distance | Surfaces ambiguity instead of one forced guess, runs locally for free |
 | Blockchain | Polygon Amoy testnet via Alchemy RPC + web3.py | Free, no card, ~2s finality, PolygonScan lets anyone verify independently |
 | Smart contract | Minimal Solidity: `storeRecord()` + event + `getRecord()` | Gives reviewers an on-chain function to point at, not a raw calldata blob |
 | Contract deployment | `deploy.py`, compiles via py-solc-x and deploys with web3.py | One command instead of a manual Remix step, same wallet key `main.py` already needs |
@@ -99,10 +100,35 @@ independently confirm a past run still matches what's on-chain:
 python verify_record.py --tx <tx_hash>
 ```
 
+## Match confidence
+
+Reverse-image search can find visually similar strangers, not just the
+actual subject, especially when a face isn't heavily reposted or tagged
+online. Rather than commit to a single automated guess that might be
+confidently wrong, `verify_candidates()` returns up to the 3
+highest-confidence verified matches (ranked by embedding distance), and
+`main.py` prints all of them. Only the single best match gets hashed and
+anchored on-chain, keeping that part of the pipeline unambiguous, but
+seeing the runner-up candidates (and how close or far their distances are)
+makes it obvious when a match is weak versus genuinely convincing.
+
 ## Example output
 
-*(TODO: paste a sample console log with the resulting tx hash and PolygonScan
-explorer link once the pipeline runs end to end)*
+Real run against a real photo, `python main.py --image photo.jpg`:
+
+```
+detected face: confidence=1.000 bbox={'x': 728, 'y': 292, 'w': 398, 'h': 476}
+reverse search: 22 social-media candidate(s)
+verified 3 candidate(s) as genuine matches:
+  [1] https://www.youtube.com/watch?v=_9Jsb54tL9k (platform=youtube.com, distance=0.5720) (anchoring this one)
+  [2] https://www.youtube.com/watch?v=gXXKBT4KmWs (platform=youtube.com, distance=0.6224)
+  [3] https://www.youtube.com/watch?v=TBr1lSxlNsY (platform=youtube.com, distance=0.6426)
+anchored on-chain: tx c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb
+view proof: https://amoy.polygonscan.com/tx/c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb
+saved record to output/c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb.json
+```
+
+[View this transaction on PolygonScan](https://amoy.polygonscan.com/tx/c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb)
 
 ## Blockchain choice
 
@@ -110,6 +136,11 @@ Polygon Amoy testnet, accessed via an Alchemy RPC endpoint. Chosen because it
 has a genuine no-card free tier, roughly 2 second block finality, full
 Solidity support, and PolygonScan gives anyone an independent way to verify
 the on-chain record without trusting this repo's output.
+
+The deployed contract's source is verified on PolygonScan (exact match):
+[0x80637a622EF860a85c3510b77eb832F356ed08DD](https://amoy.polygonscan.com/address/0x80637a622EF860a85c3510b77eb832F356ed08DD#code).
+Anyone can read the actual Solidity source there and call `getRecord()`
+directly from the "Read Contract" tab, no wallet required.
 
 ## Known limitations
 

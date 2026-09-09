@@ -158,3 +158,16 @@ wallet never has. The one that actually works for a brand-new wallet:
 required, optionally verify via X for a bigger drip. Resets every 24
 hours per wallet. Worth trying this one first before the others next time
 the burner wallet needs topping up.
+
+## 2026-09-10 - VHS doesn't work on Windows, switched to ScreenToGif
+
+Installed VHS and ttyd via winget to script the demo as a reproducible
+`.tape` file. Both run fine standalone, but VHS hangs indefinitely when it
+tries to spawn ttyd internally: ttyd dies immediately instead of binding
+its port, leaving VHS waiting forever on a dead subprocess (with orphaned
+headless Chrome instances left behind). This looks like a Windows-specific
+gap in VHS's process handling, not a local misconfiguration, and wasn't
+worth spending more time chasing for a demo recording. Switched to
+ScreenToGif instead: a free, actively maintained, Windows-native recorder
+that exports straight to GIF. Less reproducible than a scripted tape file,
+but reliable, which matters more here.
