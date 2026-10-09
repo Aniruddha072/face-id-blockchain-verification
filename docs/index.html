@@ -89,6 +89,24 @@ button:not(:disabled):hover{opacity:0.88;}
 
 .foot-note{font-size:12px; color:var(--text-dim); margin-top:32px;}
 .foot-note a{color:var(--text-muted);}
+
+h2{font-size:17px; margin:0 0 6px; font-weight:700; letter-spacing:-0.005em;}
+p.sublead{color:var(--text-muted); font-size:13.5px; margin:0 0 18px; max-width:58ch;}
+.file-row{display:flex; flex-direction:column; gap:14px; margin-bottom:16px;}
+.file-field label{margin-bottom:6px;}
+input[type=file]{
+  width:100%; background:var(--panel-raised); border:1px solid var(--line); border-radius:8px;
+  color:var(--text-muted); font-family:var(--sans); font-size:13px; padding:9px 10px;
+}
+.checklist{margin-top:18px; display:none;}
+.checklist.visible{display:block;}
+.check-row{display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; align-items:flex-start;}
+.check-row:last-child{border-bottom:none;}
+.check-row .icon{flex-shrink:0; width:18px; font-family:var(--mono); font-weight:700;}
+.check-row .icon.pass{color:var(--teal);}
+.check-row .icon.fail{color:var(--danger);}
+.check-row .text{min-width:0;}
+.check-row .text .detail{display:block; font-size:12px; color:var(--text-dim); font-family:var(--mono); margin-top:2px; word-break:break-all;}
 </style>
 </head>
 <body>
@@ -125,6 +143,30 @@ button:not(:disabled):hover{opacity:0.88;}
         <div class="lfield"><div class="k">metadataURI</div><div class="vwrap"><div class="v" id="r-metadata"></div></div></div>
       </div>
     </div>
+  </div>
+
+  <div class="panel" style="margin-top:24px;">
+    <h2>Verify your own record</h2>
+    <p class="sublead">
+      Have a result from running the pipeline yourself? Upload the source photo and
+      the saved record JSON (<code>output/&lt;tx_hash&gt;.json</code>). This recomputes
+      the hash in your browser, the same way <code>verify_record.py</code> does, then
+      checks it against the live chain. Nothing is uploaded anywhere, the photo and
+      JSON never leave this page.
+    </p>
+    <div class="file-row">
+      <div class="file-field">
+        <label for="photoInput">Source photo</label>
+        <input type="file" id="photoInput" accept="image/*">
+      </div>
+      <div class="file-field">
+        <label for="jsonInput">Record JSON</label>
+        <input type="file" id="jsonInput" accept="application/json,.json">
+      </div>
+    </div>
+    <button class="primary" id="verifyUploadBtn">Verify</button>
+    <div id="uploadStatus" class="status"></div>
+    <div id="checklist" class="checklist"></div>
   </div>
 
   <p class="foot-note">
@@ -244,6 +286,151 @@ document.querySelectorAll(".copy-btn").forEach((btn) => {
 // Open with the real example already loaded, so the page proves itself on arrival.
 hashInput.value = EXAMPLE_HASH;
 lookup();
+
+// --- Verify your own record: recomputes the hash locally, exactly like verify_record.py ---
+
+const RECORD_FIELDS = [
+  "source_image_sha256", "match_url", "platform", "similarity_score",
+  "model", "search_engine", "timestamp_utc", "models_agreed", "models_total",
+];
+
+function pythonStyleJson(record) {
+  const keys = Object.keys(record).sort();
+  const parts = keys.map((k) => JSON.stringify(k) + ": " + JSON.stringify(record[k]));
+  return "{" + parts.join(", ") + "}";
+}
+
+async function sha256Hex(data) {
+  const buf = typeof data === "string" ? new TextEncoder().encode(data) : data;
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function readFile(file, asText) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    if (asText) reader.readAsText(file); else reader.readAsArrayBuffer(file);
+  });
+}
+
+function renderChecklist(rows) {
+  const el = document.getElementById("checklist");
+  el.innerHTML = "";
+  rows.forEach((row) => {
+    const div = document.createElement("div");
+    div.className = "check-row";
+    div.innerHTML =
+      '<div class="icon ' + (row.pass ? "pass" : "fail") + '">' + (row.pass ? "OK" : "X") + "</div>" +
+      '<div class="text">' + row.text + (row.detail ? '<span class="detail">' + row.detail + "</span>" : "") + "</div>";
+    el.appendChild(div);
+  });
+  el.classList.add("visible");
+}
+
+const verifyBtn = document.getElementById("verifyUploadBtn");
+const uploadStatusEl = document.getElementById("uploadStatus");
+
+function setUploadStatus(text, kind) {
+  uploadStatusEl.textContent = text;
+  uploadStatusEl.className = "status" + (kind ? " " + kind : "");
+}
+
+verifyBtn.addEventListener("click", async () => {
+  const photoFile = document.getElementById("photoInput").files[0];
+  const jsonFile = document.getElementById("jsonInput").files[0];
+  document.getElementById("checklist").classList.remove("visible");
+
+  if (!photoFile || !jsonFile) {
+    setUploadStatus("Choose both the source photo and the record JSON file.", "err");
+    return;
+  }
+
+  verifyBtn.disabled = true;
+  setUploadStatus("Checking locally in your browser...", "loading");
+
+  try {
+    const photoBuf = await readFile(photoFile, false);
+    const photoHash = await sha256Hex(photoBuf);
+
+    const jsonText = await readFile(jsonFile, true);
+    let saved;
+    try {
+      saved = JSON.parse(jsonText);
+    } catch (e) {
+      setUploadStatus("That file isn't valid JSON.", "err");
+      verifyBtn.disabled = false;
+      return;
+    }
+
+    const missing = RECORD_FIELDS.filter((f) => !(f in saved));
+    if (missing.length) {
+      setUploadStatus("Record JSON is missing field(s): " + missing.join(", "), "err");
+      verifyBtn.disabled = false;
+      return;
+    }
+
+    const record = {};
+    RECORD_FIELDS.forEach((f) => { record[f] = saved[f]; });
+
+    const rows = [];
+
+    const photoMatches = photoHash === saved.source_image_sha256;
+    rows.push({
+      pass: photoMatches,
+      text: photoMatches
+        ? "Photo matches the record's claimed source image"
+        : "Photo does NOT match the record's claimed source image",
+      detail: "computed: " + photoHash,
+    });
+
+    const computedRecordHash = await sha256Hex(pythonStyleJson(record));
+    const claimedRecordHash = (saved.record_hash || "").replace(/^0x/, "");
+    const recordHashMatches = computedRecordHash === claimedRecordHash;
+    rows.push({
+      pass: recordHashMatches,
+      text: recordHashMatches
+        ? "Record hash recomputes correctly from the JSON fields"
+        : "Record hash does NOT match, this JSON may have been edited",
+      detail: "computed: " + computedRecordHash,
+    });
+
+    setUploadStatus("Reading the chain for this record...", "loading");
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+    const onchain = await contract.getRecord("0x" + computedRecordHash);
+
+    const onChainFound = onchain.recordHash !== ethers.ZeroHash;
+    rows.push({
+      pass: onChainFound,
+      text: onChainFound ? "Record found on-chain" : "No record found on-chain for this hash",
+    });
+
+    if (onChainFound) {
+      const agreementMatches =
+        Number(onchain.modelsAgreed) === Number(saved.models_agreed) &&
+        Number(onchain.modelsTotal) === Number(saved.models_total);
+      rows.push({
+        pass: agreementMatches,
+        text: agreementMatches
+          ? "Model agreement on-chain matches the local record (" + onchain.modelsAgreed + " of " + onchain.modelsTotal + ")"
+          : "Model agreement on-chain does not match the local record",
+      });
+    }
+
+    renderChecklist(rows);
+    const allPass = rows.every((r) => r.pass);
+    setUploadStatus(
+      allPass ? "All checks passed, this is a genuine, unaltered, on-chain record." : "One or more checks failed, see above.",
+      allPass ? "ok" : "err"
+    );
+  } catch (err) {
+    setUploadStatus("Verification failed: " + (err && err.message ? err.message : String(err)), "err");
+  } finally {
+    verifyBtn.disabled = false;
+  }
+});
 </script>
 </body>
 </html>
