@@ -29,4 +29,6 @@ def read_record(record_hash: bytes) -> dict:
         "metadataURI": result[1],
         "submitter": result[2],
         "timestamp": result[3],
+        "modelsAgreed": result[4],
+        "modelsTotal": result[5],
     }

@@ -195,3 +195,61 @@ example record and a never-anchored hash resolve correctly, against the
 live contract on the public drpc.org Amoy RPC endpoint (Polygon's own
 `rpc-amoy.polygon.technology` doesn't resolve anymore, drpc.org and
 OnFinality's public endpoint both do).
+
+## 2026-10-09 - Ensemble verification, confidence anchored on-chain, new contract
+
+Researched how comparable projects handle the false-positive problem and
+what would make this one distinctly more interesting than a typical
+face-recognition demo. Two changes:
+
+- `verify_candidates()` now runs every candidate through 3 independent
+  DeepFace models (ArcFace, Facenet512, VGG-Face), all already bundled in
+  the `deepface` package, no new dependency. A candidate only counts as
+  verified if a majority (2 of 3) agree, not just one model. Ranking still
+  uses ArcFace's distance as the primary signal; ensembling is a trust
+  gate, not a new scoring system. Costs real wall-clock time (roughly 3x
+  the verification stage), zero extra SerpApi calls, since reverse search
+  happens once per run regardless of how many models verify each
+  candidate locally afterward.
+- `FaceRecord.sol` gained two fields, `modelsAgreed` and `modelsTotal`
+  (both `uint8`, a plain agreement count, not a scaled float score, since
+  Solidity has no floats and false precision would be worse than an honest
+  integer). Checked how similar proof-of-existence projects (Chainpoint,
+  verify-proof, others) structure their on-chain records: all of them
+  anchor a bare hash only, none anchor a confidence signal alongside it.
+  Considered packing the same data into the existing (always-empty)
+  `metadataURI` string field instead of changing the struct, to avoid a
+  redeployment. Rejected that: an unstructured string crammed with a
+  custom mini-format is worse engineering than a real typed field, and
+  looks like exactly that to anyone reading the verified source on
+  PolygonScan. Redeployed instead.
+
+New contract: `0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99` (replaces
+`0x80637a622EF860a85c3510b77eb832F356ed08DD`). `storeRecord()` and
+`getRecord()` both gained the two new parameters/return fields;
+`anchor.py`, `proof.py`, and `verify_record.py`'s `RECORD_FIELDS` all
+updated to match. The old contract and the real records already anchored
+to it stay on-chain as-is (nothing to migrate, Amoy is a testnet), just no
+longer the one `CONTRACT_ADDRESS` points at. `docs/index.html` updated to
+the new address and ABI, and now displays the agreement count. New
+contract verified on PolygonScan (Exact Match), and a fresh real run
+confirmed the whole chain end to end: 3 candidates found, all 2/3
+agreement, best one anchored (tx
+dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336),
+round-tripped through `verify_record.py` against the live contract.
+
+## 2026-10-09 - Build-log artifact redesigned as a status page, not a sprint tracker
+
+The old artifact was a day-by-day hackathon checklist (day0 through day7,
+a progress bar, "what the brief actually asks for"). Dropped all of that:
+it's the same framing the README already moved away from, and a sprint
+tracker is a strange thing to show someone evaluating a finished project.
+
+Rebuilt it as a status page: what the pipeline does, why ensemble
+verification exists, the actual most-recent anchored record shown as a
+real example (not a hypothetical), the tech stack, and known limitations.
+Reused the exact color and type tokens from `docs/index.html` (the proof
+viewer) rather than inventing a new palette, so the two live pages read as
+one site instead of two unrelated ones. `decisions.md` and `HANDOFF.md`
+stay the actual source of truth; the artifact is a polished front door
+that links to them, not a mirror of their checklist detail.

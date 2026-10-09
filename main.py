@@ -32,7 +32,8 @@ def run(image_path: str) -> dict:
         flag = " (anchoring this one)" if i == 0 else ""
         print(
             f"  [{i + 1}] {m.candidate.url} "
-            f"(platform={m.candidate.platform}, distance={m.similarity_score:.4f}){flag}"
+            f"(platform={m.candidate.platform}, distance={m.similarity_score:.4f}, "
+            f"models agreed={m.models_agreed}/{m.models_total}){flag}"
         )
 
     best = matches[0]
@@ -46,6 +47,8 @@ def run(image_path: str) -> dict:
             "url": m.candidate.url,
             "platform": m.candidate.platform,
             "similarity_score": m.similarity_score,
+            "models_agreed": m.models_agreed,
+            "models_total": m.models_total,
         }
         for m in matches[1:]
     ]

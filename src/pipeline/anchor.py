@@ -22,6 +22,8 @@ def build_record(image_path: str, match: Match) -> dict:
         "model": match.model,
         "search_engine": SEARCH_ENGINE,
         "timestamp_utc": int(time.time()),
+        "models_agreed": match.models_agreed,
+        "models_total": match.models_total,
     }
 
 
@@ -40,13 +42,17 @@ def anchor_record(record: dict, metadata_uri: str = "") -> str:
         address=Web3.to_checksum_address(config.CONTRACT_ADDRESS), abi=abi
     )
     h = record_hash(record)
+    models_agreed = record["models_agreed"]
+    models_total = record["models_total"]
 
     def _call():
         gas_price = w3.eth.gas_price
         gas_estimate = contract.functions.storeRecord(
-            h, metadata_uri
+            h, metadata_uri, models_agreed, models_total
         ).estimate_gas({"from": account.address})
-        tx = contract.functions.storeRecord(h, metadata_uri).build_transaction(
+        tx = contract.functions.storeRecord(
+            h, metadata_uri, models_agreed, models_total
+        ).build_transaction(
             {
                 "from": account.address,
                 "nonce": w3.eth.get_transaction_count(account.address),

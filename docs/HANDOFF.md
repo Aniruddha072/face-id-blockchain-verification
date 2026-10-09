@@ -5,11 +5,13 @@ Last updated: 2026-10-09
 ## Where things stand
 
 Resumed weeks later to finish this as a resume piece. Hackathon framing is
-gone from the README. The project now has a live, free, read-only on-chain
-proof viewer (`docs/index.html`, hosted on GitHub Pages) instead of a demo
-video as the main "try it" surface, plus repo topics/description polish.
-See the 2026-10-09 decisions.md entry for why a full pipeline web demo was
-rejected in favor of this. The demo GIF is the only thing left.
+gone from the README and from the build-log artifact (redesigned as a
+status page, not a sprint tracker). The project has a live, free,
+read-only on-chain proof viewer (`docs/index.html`, hosted on GitHub
+Pages), repo topics/description polish, and ensemble face verification
+with the model-agreement count anchored on-chain. See the 2026-10-09
+decisions.md entries for the reasoning behind all of this. The demo GIF
+is the only thing left.
 
 **Done:**
 - Public repo created: https://github.com/Aniruddha072/face-id-blockchain-verification
@@ -22,23 +24,9 @@ rejected in favor of this. The demo GIF is the only thing left.
   verify_record.py
 - SerpApi key active, Alchemy Amoy RPC URL working (chain ID 80002
   confirmed), burner wallet funded from the Polygon faucet
-- Contract deployed to Amoy: 0x80637a622EF860a85c3510b77eb832F356ed08DD
-  (deploy.py, not Remix, see decisions.md), source verified on PolygonScan
-  (Exact Match), Read Contract tab confirmed working with no wallet needed
-- Multiple real end-to-end runs against live photos: face detection,
-  reverse search, verification, and on-chain anchoring all confirmed
-  working against real data, not just synthetic tests
 - Fixed issues #1-#7 (see repo issue tracker), all surfaced by real runs
 - Clean-clone test passed: fresh clone, fresh venv, README's setup steps
   followed exactly, full pipeline ran successfully unmodified
-- verify_candidates() returns the top 3 verified matches ranked by
-  distance instead of one forced best guess; only the best still gets
-  anchored on-chain. Confirmed live: 3 real candidates found and ranked,
-  best one anchored (tx c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb)
-- README fully updated: Overview and tech stack table mention the
-  multi-candidate ranking, new "Match confidence" section explains the
-  design, "Example output" has the real console log from the run above
-  plus a PolygonScan link, "Blockchain choice" links the verified contract
 - Build-log tracker page (source at docs/build-log.html, hosted separately
   from this repo) updated to match throughout
 - Hackathon framing removed from README (task banner, "brief" wording)
@@ -47,18 +35,33 @@ rejected in favor of this. The demo GIF is the only thing left.
   GitHub Pages at https://aniruddha072.github.io/face-id-blockchain-verification/,
   repo homepage URL set to it. Looks up a record hash and calls
   `getRecord()` on the verified contract directly from the browser
-  (ethers.js v6 via CDN). Verified against the live contract, both a real
-  record and a not-found hash, via the public drpc.org Amoy RPC.
+  (ethers.js v6 via CDN)
+- Ensemble verification: every candidate checked against ArcFace,
+  Facenet512, and VGG-Face, needs 2-of-3 agreement to count as verified.
+  Real run confirmed it end to end (3 candidates found, all 2/3 agreement)
+- Contract redeployed to carry the agreement count on-chain:
+  `0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99` (replaces
+  `0x80637a622EF860a85c3510b77eb832F356ed08DD`, see decisions.md for why),
+  source verified on PolygonScan (Exact Match), Read Contract tab working.
+  `anchor.py`, `proof.py`, `verify_record.py`, `docs/index.html` all
+  updated to the new ABI and address
+- Fresh real example run against the new contract (tx
+  dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336),
+  round-tripped through `verify_record.py` to confirm the on-chain record
+  matches. README's "Example output" and the proof viewer's example hash
+  both updated to this real data
+- Build-log artifact (docs/build-log.html) redesigned from a day-by-day
+  sprint checklist into a status page: real anchored record shown as
+  proof, ensemble explanation, tech stack, limitations. Reuses the proof
+  viewer's exact color/type tokens so the two live pages read as one site
 
 **Not done:**
 - Demo GIF: ScreenToGif is installed, a test recording was done weeks ago,
   official recording still pending (user wants it done last, after
   everything else)
-- Embed the demo GIF in the README's "Demo recording" section once it exists
 - Final commit and push once the GIF lands
 
 ## Next concrete step
 
-Record the real demo with ScreenToGif (pipeline run showing the
-multi-candidate output and the on-chain anchor), embed the GIF in the
-README, then the project is done.
+Commit and push everything from this session, then the demo GIF is the
+last remaining item on the whole project.

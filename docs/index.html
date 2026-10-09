@@ -76,8 +76,9 @@ code{color:var(--periwinkle);}
   <p class="lead">
     Reads live from <code>FaceRecord.sol</code>, deployed and source-verified on Polygon
     Amoy testnet. Paste a record hash to confirm a match record is genuinely on-chain,
-    unaltered since it was anchored. This page only reads public data, no wallet or
-    API key needed.
+    unaltered since it was anchored, including how many independent face-verification
+    models agreed on the match. This page only reads public data, no wallet or API
+    key needed.
   </p>
 
   <div class="panel">
@@ -92,6 +93,7 @@ code{color:var(--periwinkle);}
       <div class="field"><div class="k">recordHash</div><div class="v" id="r-hash"></div></div>
       <div class="field"><div class="k">submitter</div><div class="v" id="r-submitter"></div></div>
       <div class="field"><div class="k">timestamp</div><div class="v" id="r-timestamp"></div></div>
+      <div class="field"><div class="k">model agreement</div><div class="v" id="r-agreement"></div></div>
       <div class="field"><div class="k">metadataURI</div><div class="v" id="r-metadata"></div></div>
     </div>
   </div>
@@ -105,11 +107,11 @@ code{color:var(--periwinkle);}
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script>
-const CONTRACT_ADDRESS = "0x80637a622EF860a85c3510b77eb832F356ed08DD";
+const CONTRACT_ADDRESS = "0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99";
 const RPC_URL = "https://polygon-amoy.drpc.org";
-const EXAMPLE_HASH = "0xe5ba26add3a15aa1bfa8d30c1819a2067d23c9fe4ad51be72f35299599b992ad";
+const EXAMPLE_HASH = "0x4a377bc19ea1ff7714f49ef659fc5c9772d5640081459ed42a30135f55428317";
 const ABI = [
-  "function getRecord(bytes32 recordHash) view returns (tuple(bytes32 recordHash, string metadataURI, address submitter, uint256 timestamp) record)"
+  "function getRecord(bytes32 recordHash) view returns (tuple(bytes32 recordHash, string metadataURI, address submitter, uint256 timestamp, uint8 modelsAgreed, uint8 modelsTotal) record)"
 ];
 
 document.getElementById("contractLink").href =
@@ -153,6 +155,8 @@ async function lookup() {
     document.getElementById("r-submitter").textContent = record.submitter;
     document.getElementById("r-timestamp").textContent =
       new Date(Number(record.timestamp) * 1000).toISOString().replace("T", " ").replace("Z", " UTC");
+    document.getElementById("r-agreement").textContent =
+      record.modelsAgreed + " of " + record.modelsTotal + " face-verification models agreed";
     document.getElementById("r-metadata").textContent = record.metadataURI || "(none, hash-only record)";
 
     resultEl.classList.add("visible");

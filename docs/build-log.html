@@ -1,8 +1,9 @@
-<title>Face ID + Blockchain Build Log</title>
+<title>Face ID + Blockchain Verification</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* layout: single-column ledger, hero -> pipeline -> confidence -> proof -> stack -> limits -> footer */
 :root{
   --bg:#0E0F13;
   --panel:#15171E;
@@ -18,6 +19,7 @@
   --danger:#E2685C;
   --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color-scheme: dark;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -25,627 +27,185 @@ body{
   background:var(--bg);
   color:var(--text);
   font-family:var(--sans);
-  line-height:1.5;
+  line-height:1.55;
   -webkit-font-smoothing:antialiased;
 }
-@media (prefers-reduced-motion: reduce){
-  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
-}
+@media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
 a{color:var(--amber);}
 a:focus-visible, button:focus-visible, summary:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
-.wrap{max-width:880px; margin:0 auto; padding:28px 20px 80px;}
+code{font-family:var(--mono); color:var(--periwinkle); background:var(--panel-raised); border:1px solid var(--line); padding:1px 6px; border-radius:4px; font-size:0.92em;}
+.wrap{max-width:760px; margin:0 auto; padding:52px 20px 80px;}
+section{margin-bottom:48px;}
 
-.eyebrow{
-  font-family:var(--mono);
-  font-size:12.5px;
-  color:var(--text-dim);
-  letter-spacing:0.02em;
-  margin-bottom:10px;
-}
-h1{
-  font-size:27px;
-  line-height:1.25;
-  margin:0 0 6px;
-  font-weight:700;
-  letter-spacing:-0.01em;
-  text-wrap:balance;
-}
-.subhead{
-  color:var(--text-muted);
-  font-size:14.5px;
-  max-width:66ch;
-  margin:0 0 22px;
-}
+.eyebrow{font-family:var(--mono); font-size:12.5px; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; margin-bottom:14px;}
+h1{font-size:34px; line-height:1.15; margin:0 0 14px; font-weight:700; letter-spacing:-0.02em; text-wrap:balance;}
+.lede{color:var(--text-muted); font-size:16px; max-width:60ch; margin:0 0 26px;}
+.cta-row{display:flex; gap:10px; flex-wrap:wrap;}
+.btn{display:inline-flex; align-items:center; gap:8px; font-family:var(--sans); font-weight:600; font-size:14px; border-radius:8px; padding:11px 18px; text-decoration:none; border:1px solid var(--line);}
+.btn.primary{background:var(--teal); color:#0A0B0F; border-color:var(--teal);}
+.btn.ghost{color:var(--text); background:var(--panel);}
 
-/* ground-truth strip */
-.truth-strip{
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:space-between;
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:11px 16px;
-  margin-bottom:22px;
-  font-size:12.5px;
-  color:var(--text-muted);
-}
-.truth-strip .truth-left{display:flex; gap:16px; flex-wrap:wrap; align-items:center;}
-.truth-strip strong{color:var(--text); font-weight:600;}
-.truth-strip a{text-decoration:none;}
-.truth-strip a:hover{text-decoration:underline;}
-.dot{color:var(--text-dim);}
+.stat-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:30px;}
+.stat{flex:1 1 150px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+.stat .n{font-family:var(--mono); font-size:20px; font-weight:600; color:var(--teal); font-variant-numeric:tabular-nums;}
+.stat .l{font-size:12px; color:var(--text-dim); margin-top:4px;}
 
-.status-row{
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-  align-items:stretch;
-  margin-bottom:26px;
-}
-.status-card{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:14px 16px;
-  flex:1 1 200px;
-}
-.status-label{
-  font-size:11.5px;
-  color:var(--text-dim);
-  margin-bottom:6px;
-}
-.status-value{
-  font-family:var(--mono);
-  font-size:20px;
-  font-weight:600;
-  font-variant-numeric:tabular-nums;
-}
-.status-value.warn{color:var(--danger);}
-.progress-track{
-  height:7px;
-  background:var(--line-soft);
-  border-radius:99px;
-  overflow:hidden;
-  margin-top:10px;
-}
-.progress-fill{
-  height:100%;
-  background:linear-gradient(90deg,var(--amber),var(--teal),var(--periwinkle));
-  border-radius:99px;
-}
+h2{font-size:12.5px; color:var(--text-muted); font-family:var(--mono); letter-spacing:0.04em; text-transform:uppercase; margin:0 0 16px; padding-bottom:10px; border-bottom:1px solid var(--line); font-weight:500;}
 
-.pipeline{
-  display:flex;
-  gap:0;
-  margin:0 0 30px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  overflow:hidden;
-  flex-wrap:wrap;
-}
-.pstage{
-  flex:1 1 150px;
-  padding:14px 14px 15px;
-  border-right:1px solid var(--line);
-  position:relative;
-}
+.pipeline{display:flex; gap:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; flex-wrap:wrap;}
+.pstage{flex:1 1 150px; padding:16px 15px; border-right:1px solid var(--line); position:relative;}
 .pstage:last-child{border-right:none;}
-.pstage .pnum{
-  font-family:var(--mono);
-  font-size:11px;
-  color:var(--text-dim);
-  margin-bottom:6px;
-}
-.pstage .ptitle{font-weight:600; font-size:14px; margin-bottom:4px;}
-.pstage .pdesc{font-size:12.5px; color:var(--text-muted);}
+.pstage .pnum{font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-bottom:8px;}
+.pstage .ptitle{font-weight:600; font-size:14.5px; margin-bottom:4px;}
+.pstage .pdesc{font-size:12.5px; color:var(--text-muted); line-height:1.45;}
 .pstage.c-amber{border-top:2px solid var(--amber);}
 .pstage.c-teal{border-top:2px solid var(--teal);}
 .pstage.c-peri{border-top:2px solid var(--periwinkle);}
 
-section.block{margin-bottom:34px;}
-h2{
-  font-size:12px;
-  color:var(--text-muted);
-  font-family:var(--mono);
-  letter-spacing:0.01em;
-  margin:0 0 12px;
-  padding-bottom:8px;
-  border-bottom:1px solid var(--line);
-  font-weight:500;
-}
+.confidence-row{display:flex; gap:24px; flex-wrap:wrap; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px;}
+.vote-dots{display:flex; gap:6px; flex-shrink:0;}
+.vote-dot{width:14px; height:14px; border-radius:50%; background:var(--line);}
+.vote-dot.on{background:var(--teal);}
+.confidence-text{flex:1 1 280px; min-width:0; font-size:14px; color:var(--text-muted);}
+.confidence-text strong{color:var(--text); font-weight:600;}
+.models-list{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;}
+.model-chip{font-family:var(--mono); font-size:11.5px; padding:4px 10px; border-radius:99px; border:1px solid var(--line); color:var(--text-muted);}
 
-.req-list{list-style:none; margin:0; padding:0;}
-.req-list li{
-  display:flex;
-  gap:10px;
-  padding:9px 0;
-  border-bottom:1px solid var(--line-soft);
-  font-size:14.5px;
-}
-.req-list li:last-child{border-bottom:none;}
-.req-list .tick{color:var(--teal); font-family:var(--mono); flex-shrink:0;}
-.money-list .tick{color:var(--amber);}
+.ledger{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+.ledger-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+.ledger-head .tag{font-family:var(--mono); font-size:11px; color:var(--bg); background:var(--teal); padding:3px 9px; border-radius:5px; font-weight:600; letter-spacing:0.02em;}
+.ledger-body{padding:4px 18px;}
+.lfield{display:flex; gap:14px; padding:11px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; flex-wrap:wrap;}
+.lfield:last-child{border-bottom:none;}
+.lfield .k{color:var(--text-dim); font-family:var(--mono); font-size:11.5px; flex:0 0 130px; padding-top:2px;}
+.lfield .v{font-family:var(--mono); font-size:13px; word-break:break-all; min-width:0; flex:1 1 auto;}
+.lfield .v a{color:var(--text); text-decoration:underline; text-decoration-color:var(--line);}
+.runner-up{padding:10px 18px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--text-muted); display:flex; gap:10px; flex-wrap:wrap;}
+.runner-up .dist{font-family:var(--mono); color:var(--text-dim); flex-shrink:0;}
+.runner-up .url{min-width:0; overflow-wrap:anywhere;}
 
 .stack-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:10px;}
-table.stack{width:100%; border-collapse:collapse; font-size:13.5px; min-width:660px;}
-table.stack th{
-  text-align:left;
-  font-family:var(--mono);
-  font-weight:500;
-  font-size:11.5px;
-  color:var(--text-dim);
-  padding:10px 14px;
-  background:var(--panel);
-  border-bottom:1px solid var(--line);
-  white-space:nowrap;
-}
-table.stack td{padding:12px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--text-muted);}
+table.stack{width:100%; border-collapse:collapse; font-size:13px; min-width:600px;}
+table.stack th{text-align:left; font-family:var(--mono); font-weight:500; font-size:11px; color:var(--text-dim); padding:10px 14px; background:var(--panel); border-bottom:1px solid var(--line); white-space:nowrap;}
+table.stack td{padding:11px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--text-muted);}
 table.stack tr:last-child td{border-bottom:none;}
 table.stack td.layer{color:var(--text); font-weight:600; white-space:nowrap;}
 table.stack td.pick{color:var(--amber);}
 
-.day{
-  border:1px solid var(--line);
-  border-radius:10px;
-  margin-bottom:10px;
-  background:var(--panel);
-  overflow:hidden;
-}
-.day-head{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:14px 16px;
-  cursor:pointer;
-  user-select:none;
-  list-style:none;
-}
-.day-head::-webkit-details-marker{display:none;}
-.day-head .dcount{font-family:var(--mono); font-size:11px; color:var(--text-dim); flex-shrink:0; width:58px;}
-.day-head .dtitle{font-weight:600; font-size:15px; flex:1;}
-.day-head .dprog{font-family:var(--mono); font-size:12px; color:var(--text-muted); font-variant-numeric:tabular-nums; flex-shrink:0;}
-.day-head .chev{font-size:12px; color:var(--text-dim); flex-shrink:0; transition:transform 0.2s ease;}
-details[open] .chev{transform:rotate(90deg);}
-.day-body-inner{padding:2px 16px 14px; border-top:1px solid var(--line-soft);}
-.today-flag{
-  display:inline-block;
-  font-family:var(--mono);
-  font-size:10px;
-  color:var(--bg);
-  background:var(--amber);
-  padding:2px 7px;
-  border-radius:4px;
-  margin-left:8px;
-  font-weight:600;
-}
+.limit-list{list-style:none; margin:0; padding:0; background:var(--panel); border:1px solid var(--line); border-radius:10px;}
+.limit-list li{display:flex; gap:10px; padding:11px 16px; border-bottom:1px solid var(--line-soft); font-size:13.5px; color:var(--text-muted);}
+.limit-list li:last-child{border-bottom:none;}
+.limit-list .m{color:var(--text-dim); font-family:var(--mono); flex-shrink:0;}
 
-.check-item{display:flex; gap:10px; padding:8px 0; align-items:flex-start;}
-.mark{
-  flex-shrink:0;
-  width:16px; height:16px;
-  border-radius:5px;
-  margin-top:2px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px;
-  font-family:var(--mono);
-  line-height:1;
-}
-.mark.done{background:var(--teal); color:var(--bg);}
-.mark.pending{border:1px solid var(--line); color:transparent;}
-.check-item .item-text{font-size:14px;}
-.check-item.done .item-text{color:var(--text-dim);}
-.item-note{display:block; font-size:12.5px; color:var(--text-muted); margin-top:2px;}
-.item-note code{
-  background:var(--panel-raised);
-  border:1px solid var(--line);
-  padding:1px 5px;
-  border-radius:4px;
-  font-family:var(--mono);
-  font-size:11.5px;
-  color:var(--periwinkle);
-}
-
-pre{
-  background:#0A0B0F;
-  border:1px solid var(--line);
-  border-radius:8px;
-  padding:14px 16px;
-  overflow-x:auto;
-  font-family:var(--mono);
-  font-size:12.5px;
-  line-height:1.6;
-  color:#C9CCD6;
-  margin:10px 0 18px;
-}
-pre .cm{color:var(--text-dim);}
-.snippet-label{font-family:var(--mono); font-size:11.5px; color:var(--text-dim); margin-bottom:-4px;}
-
-.reset-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-top:8px;
-  padding-top:16px;
-  border-top:1px solid var(--line);
-  flex-wrap:wrap;
-}
-.foot-note{font-size:12px; color:var(--text-dim);}
+footer{border-top:1px solid var(--line); padding-top:22px; display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--text-dim);}
+footer a{color:var(--text-muted);}
 </style>
 
 <div class="wrap">
 
-<div class="eyebrow">Originally built for HH Goa 2026, Partner Trials, Task #3 &middot; now a portfolio project</div>
+<div class="eyebrow">Polygon Amoy testnet &middot; source-verified contract</div>
 <h1>Face ID + Blockchain Verification</h1>
-<p class="subhead">A pipeline that detects a face, finds a genuine social media match through reverse-image search, and anchors that match on-chain as a tamper-evident record. Every tool picked below has a real $0 tier, no card, no crypto spend. The hackathon submission window passed without a submission, but the pipeline works, so the build continued.</p>
-
-<div class="truth-strip">
-  <div class="truth-left">
-    <span><strong>Ground truth:</strong> this page is edited and republished by hand alongside the repo, it does not save clicks</span>
-    <span class="dot">&bull;</span>
-    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">repo</a></span>
-    <span class="dot">&bull;</span>
-    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/decisions.md" target="_blank" rel="noopener">15 decisions logged</a></span>
-    <span class="dot">&bull;</span>
-    <span><a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/HANDOFF.md" target="_blank" rel="noopener">handoff notes</a></span>
-  </div>
-  <div>Last synced Oct 9, 2026</div>
+<p class="lede">
+  Detects a face, finds it across the public web via reverse-image search,
+  confirms the match with an ensemble of three independent face-verification
+  models, and anchors the result on-chain as a record anyone can check
+  themselves, including how confident the match was.
+</p>
+<div class="cta-row">
+  <a class="btn primary" href="https://aniruddha072.github.io/face-id-blockchain-verification/" target="_blank" rel="noopener">Open the live proof viewer</a>
+  <a class="btn ghost" href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">View source on GitHub</a>
+</div>
+<div class="stat-row">
+  <div class="stat"><div class="n">3</div><div class="l">face models ensembled per candidate</div></div>
+  <div class="stat"><div class="n">Verified</div><div class="l">contract source, exact match on PolygonScan</div></div>
+  <div class="stat"><div class="n">$0</div><div class="l">to build, no card entered anywhere</div></div>
 </div>
 
-<div class="status-row">
-  <div class="status-card">
-    <div class="status-label">Status</div>
-    <div class="status-value" style="font-size:15px;">Portfolio piece, post-hackathon</div>
+<section>
+<h2>Pipeline</h2>
+<div class="pipeline">
+  <div class="pstage c-amber"><div class="pnum">01</div><div class="ptitle">Detect & encode</div><div class="pdesc">RetinaFace finds the face, ArcFace turns it into an embedding</div></div>
+  <div class="pstage c-teal"><div class="pnum">02</div><div class="ptitle">Reverse search</div><div class="pdesc">Google Lens (via SerpApi) finds where that face appears publicly</div></div>
+  <div class="pstage c-teal"><div class="pnum">03</div><div class="ptitle">Ensemble verify</div><div class="pdesc">3 models vote on each candidate, majority required to pass</div></div>
+  <div class="pstage c-peri"><div class="pnum">04</div><div class="ptitle">Anchor on-chain</div><div class="pdesc">Hash and agreement count written to a Solidity contract</div></div>
+  <div class="pstage c-peri"><div class="pnum">05</div><div class="ptitle">Prove it</div><div class="pdesc">Read the chain back, confirm nothing was altered</div></div>
+</div>
+</section>
+
+<section>
+<h2>Why ensemble verification</h2>
+<div class="confidence-row">
+  <div class="vote-dots" aria-hidden="true">
+    <div class="vote-dot on"></div><div class="vote-dot on"></div><div class="vote-dot"></div>
   </div>
-  <div class="status-card">
-    <div class="status-label">Progress</div>
-    <div class="status-value" id="progressText">52 / 62</div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:83.9%"></div></div>
+  <div class="confidence-text">
+    A single model can confidently match the wrong person. Confirmed with a real
+    test: ArcFace alone passed a stranger's photo under its own threshold. Every
+    candidate here is checked against <strong>3 independent models</strong>, and
+    needs a majority to count as genuinely verified, not just one opinion.
+  </div>
+  <div class="models-list">
+    <span class="model-chip">ArcFace</span>
+    <span class="model-chip">Facenet512</span>
+    <span class="model-chip">VGG-Face</span>
   </div>
 </div>
-
-<div class="pipeline" id="pipeline"></div>
-
-<section class="block">
-<h2>what the brief actually asks for</h2>
-<ul class="req-list" id="reqList"></ul>
 </section>
 
-<section class="block">
-<h2>$0 build, the rules that keep it that way</h2>
-<ul class="req-list money-list" id="moneyList"></ul>
+<section>
+<h2>Proof: the most recent real anchor</h2>
+<div class="ledger">
+  <div class="ledger-head">
+    <span class="tag">2 of 3 models agreed</span>
+    <span style="font-family:var(--mono); font-size:12px; color:var(--text-dim);">youtube.com, distance 0.5836</span>
+  </div>
+  <div class="ledger-body">
+    <div class="lfield"><div class="k">record hash</div><div class="v">0x4a377bc19ea1ff7714f49ef659fc5c9772d5640081459ed42a30135f55428317</div></div>
+    <div class="lfield"><div class="k">transaction</div><div class="v"><a href="https://amoy.polygonscan.com/tx/dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336" target="_blank" rel="noopener">dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336</a></div></div>
+    <div class="lfield"><div class="k">contract</div><div class="v"><a href="https://amoy.polygonscan.com/address/0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99#code" target="_blank" rel="noopener">0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99</a></div></div>
+  </div>
+  <div class="runner-up"><span class="dist">0.6123</span><span class="url">facebook.com, also 2/3 agreement, not the one anchored</span></div>
+  <div class="runner-up"><span class="dist">0.6125</span><span class="url">instagram.com, also 2/3 agreement, not the one anchored</span></div>
+</div>
 </section>
 
-<section class="block">
-<h2>tech stack, the calls we're making and why</h2>
+<section>
+<h2>Tech stack</h2>
 <div class="stack-scroll">
 <table class="stack">
-<thead><tr><th>Layer</th><th>Pick</th><th>Why this one</th><th>Fallback</th></tr></thead>
-<tbody id="stackBody"></tbody>
+<thead><tr><th>Layer</th><th>Pick</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td class="layer">Face detect + encode</td><td class="pick">DeepFace: RetinaFace + ArcFace</td><td>Free, self-hosted, swappable backends</td></tr>
+<tr><td class="layer">Reverse image search</td><td class="pick">SerpApi, Google Lens engine</td><td>Genuine Google results, free tier, no card</td></tr>
+<tr><td class="layer">Match verification</td><td class="pick">DeepFace ensemble: ArcFace + Facenet512 + VGG-Face</td><td>One model can confidently match the wrong person; majority vote catches that</td></tr>
+<tr><td class="layer">Blockchain</td><td class="pick">Polygon Amoy testnet, Alchemy RPC, web3.py</td><td>Free, ~2s finality, full Solidity support</td></tr>
+<tr><td class="layer">Smart contract</td><td class="pick">Solidity, source-verified on PolygonScan</td><td>Readable, callable by anyone, no wallet needed to read</td></tr>
+<tr><td class="layer">Proof viewer</td><td class="pick">Static page, ethers.js, GitHub Pages</td><td>Free, read-only, can't be abused or run up a bill</td></tr>
+</tbody>
 </table>
 </div>
 </section>
 
-<section class="block">
-<h2>day-by-day build log</h2>
-<div id="days"></div>
+<section>
+<h2>Known limitations</h2>
+<ul class="limit-list">
+  <li><span class="m">&gt;</span>Search coverage is limited to what Google has indexed, won't find recent or private posts</li>
+  <li><span class="m">&gt;</span>A tamper-evident hash on-chain proves the record existed at a point in time, not that the matched content itself is authentic</li>
+  <li><span class="m">&gt;</span>No liveness or deepfake detection on the input photo</li>
+  <li><span class="m">&gt;</span>Runs on Polygon's public Amoy testnet, not mainnet, no real funds involved</li>
+  <li><span class="m">&gt;</span>Built only for use with consenting subjects who have a real public presence</li>
+</ul>
 </section>
 
-<section class="block">
-<h2>reference snippets</h2>
-<div class="snippet-label">contracts/FaceRecord.sol</div>
-<pre>// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-contract FaceRecord {
-  struct Record {
-    bytes32 recordHash;
-    string metadataURI;
-    address submitter;
-    uint256 timestamp;
-  }
-
-  mapping(bytes32 =&gt; Record) public records;
-
-  event RecordStored(
-    address indexed submitter,
-    bytes32 indexed recordHash,
-    string metadataURI,
-    uint256 timestamp
-  );
-
-  function storeRecord(bytes32 recordHash, string calldata metadataURI) external {
-    records[recordHash] = Record(recordHash, metadataURI, msg.sender, block.timestamp);
-    emit RecordStored(msg.sender, recordHash, metadataURI, block.timestamp);
-  }
-
-  function getRecord(bytes32 recordHash) external view returns (Record memory) {
-    return records[recordHash];
-  }
-}</pre>
-
-<div class="snippet-label">planned module layout (src/pipeline/, see decisions.md)</div>
-<pre><span class="cm"># main.py --image photo.jpg chains these in order:</span>
-detect.py   <span class="cm">detect_and_encode(image_path) -&gt; FaceEncoding</span>
-search.py   <span class="cm">reverse_search(image_path) -&gt; list[Candidate]</span>
-verify.py   <span class="cm">verify_candidates(image_path, candidates) -&gt; Match</span>
-anchor.py   <span class="cm">build_record(...), anchor_record(record) -&gt; tx_hash</span>
-proof.py    <span class="cm">read_record(record_hash) -&gt; on-chain Record, used by verify_record.py</span></pre>
-
-<div class="snippet-label">.env.example</div>
-<pre>SERPAPI_KEY=
-SERPER_API_KEY= <span class="cm"># optional backup, no card, 2,500 free one-time queries</span>
-ALCHEMY_AMOY_RPC_URL=
-WALLET_PRIVATE_KEY= <span class="cm"># burner wallet only, funded from a testnet faucet, never real funds</span>
-CONTRACT_ADDRESS=
-PINATA_JWT= <span class="cm"># optional, only if you pin records to IPFS</span></pre>
-</section>
-
-<section class="block">
-<h2>README checklist</h2>
-<div id="readmeList"></div>
-</section>
-
-<section class="block">
-<h2>known limitations, write these into the README</h2>
-<div id="limitList"></div>
-</section>
-
-<section class="block">
-<h2>final polish check</h2>
-<div id="finalList"></div>
-</section>
-
-<div class="reset-row">
-  <span class="foot-note">Static snapshot, republished by hand each session. State lives in the repo's docs/decisions.md and docs/HANDOFF.md.</span>
-  <span class="foot-note">Face ID + Blockchain Verification</span>
-</div>
+<footer>
+  <span>Static page, edited and republished by hand alongside the repo.</span>
+  <span>
+    <a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/decisions.md" target="_blank" rel="noopener">decisions log</a>
+    &middot;
+    <a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/docs/HANDOFF.md" target="_blank" rel="noopener">handoff notes</a>
+    &middot;
+    <a href="https://github.com/Aniruddha072/face-id-blockchain-verification/blob/master/LICENSE" target="_blank" rel="noopener">MIT license</a>
+  </span>
+</footer>
 
 </div>
-
-<script>
-(function(){
-  const DONE = new Set([
-    'd0-1','d0-2','d0-3','d0-4','d0-5','d0-6','d0-7',
-    'd1-1','d1-2','d1-3','d1-4',
-    'd2-1','d2-2','d2-3','d2-4','d2-5',
-    'd3-1','d3-2','d3-3','d3-4','d3-6',
-    'd4-1','d4-2','d4-3','d4-4','d4-5',
-    'd5-1','d5-2',
-    'd6-1','d6-2',
-    'd7-1','d7-2','d7-3',
-    'readme-0','readme-1','readme-2','readme-3','readme-5','readme-6','readme-7','readme-8','readme-9','readme-10',
-    'limit-0','limit-1','limit-2','limit-3','limit-4','limit-5','limit-6',
-    'final-0','final-1',
-  ]);
-
-  const PIPELINE = [
-    {n:'01', c:'c-amber', t:'Input &amp; Encode', d:'Detect the face, turn it into an embedding'},
-    {n:'02', c:'c-teal', t:'Reverse Search', d:'Find where that face shows up on the public web'},
-    {n:'03', c:'c-teal', t:'Verify Match', d:"Confirm it's genuinely the same face, not just similar"},
-    {n:'04', c:'c-peri', t:'Anchor On-Chain', d:'Hash the record, write it to a smart contract'},
-    {n:'05', c:'c-peri', t:'Prove It', d:'Read the chain back and confirm nothing was altered'},
-  ];
-
-  const REQUIREMENTS = [
-    'Detect and encode a face from an input image, any library or API works',
-    'Find at least one real, matching social media post via genuine reverse-image search, no hardcoded results',
-    "Upload the match's data to a blockchain for a tamper-evident, verifiable record",
-    "No website or hosting needed, the pipeline itself is what gets judged",
-    'Source on GitHub: functionality, how to run it, which blockchain, and known limitations',
-    'An unedited screen recording of the full pipeline running end to end',
-  ];
-
-  const MONEY_RULES = [
-    "Never enter a card on any signup for this project. Every tool below has a genuine no-card free tier, and if something asks for billing details, that's the signal to switch to the fallback",
-    'The wallet only ever holds testnet POL from a faucet. Never bridge, buy, or send real MATIC, POL, or ETH into it',
-    "Skip FaceCheck.id and PimEyes entirely. Both need a real payment (crypto or card) before results are usable, so they don't fit a $0 build",
-    "Stay under each free API's monthly cap. If SerpApi's 250 free searches run out, switch to Serper.dev's one-time 2,500 free queries rather than upgrading a paid plan",
-    'IPFS/Pinata pinning is optional polish, not a requirement. Skip it for one less signup, since the SHA-256 hash on-chain already satisfies the task',
-    "Screen record with what's already on your machine: OBS Studio (free, open source) or Windows' built-in Game Bar (Win+G). No paid recorder needed",
-  ];
-
-  const STACK = [
-    ['Face detect + encode','DeepFace (Python): RetinaFace + ArcFace','One-line API, swappable backends, free, fully self-hosted, no signup at all','face_recognition (dlib) if install gives you trouble'],
-    ['Reverse image search','SerpApi: Google Lens engine','Genuine Google reverse-image results, 250 free searches/month, no card required','Serper.dev, 2,500 free one-time queries, no card, if you need more headroom'],
-    ['Match verification','DeepFace.verify() on every candidate',"This is what turns a visually similar hit into a genuine face match, runs locally for free",'n/a'],
-    ['Blockchain','Polygon Amoy testnet via Alchemy RPC + web3.py','Free forever, no card, ~2s finality, full Solidity support, PolygonScan lets anyone verify independently',"Chainstack's free Developer RPC plan (also no card), if Alchemy ever asks for billing info"],
-    ['Smart contract','Minimal Solidity: storeRecord() + event + getRecord()','Gives a reviewer an actual on-chain function to point at, not a raw calldata blob. Deploy free via Remix in the browser','A plain tx with the hash in calldata, if time is short'],
-    ['Off-chain storage','Pin the full record JSON to IPFS via Pinata (free tier, no card)','Keeps the chain write cheap while the full record stays immutable and content-addressed','Skip IPFS entirely, the on-chain hash alone already satisfies the requirement'],
-    ['Wallet','Brand-new burner MetaMask wallet','Funded only via testnet faucet, zero real funds ever touch this project','n/a'],
-  ];
-
-  const DAYS = [
-    {id:'day0', date:'Sep 2', title:'Foundations', items:[
-      {id:'d0-1', text:'Create the GitHub repo (public), add a README stub, .gitignore, LICENSE'},
-      {id:'d0-2', text:'Set up Python 3.10+ venv, install deepface, opencv-python, retina-face, requests, web3, python-dotenv'},
-      {id:'d0-3', text:'Create a SerpApi account and grab the API key', note:'confirm the 250 free searches/month is active'},
-      {id:'d0-4', text:'Create an Alchemy account, spin up a Polygon Amoy app, copy the RPC URL'},
-      {id:'d0-5', text:'Create a brand-new burner MetaMask wallet just for this project, fund it from the Amoy faucet', note:'testnet POL only, never send real funds to this wallet'},
-      {id:'d0-6', text:'Pick 1-2 consenting test subjects with a real, findable public social presence', note:'yourself is the easiest option'},
-      {id:'d0-7', text:'Sanity-check every signup before entering details', note:'if a form asks for a card, stop and use the free fallback instead'},
-    ]},
-    {id:'day1', date:'Sep 3', title:'Face detection + encoding', items:[
-      {id:'d1-1', text:'Write detect_and_encode(image_path) using DeepFace', note:'<code>detector_backend="retinaface"</code>, <code>model_name="ArcFace"</code>'},
-      {id:'d1-2', text:'Handle zero-face and multi-face cases, pick the largest / most confident box'},
-      {id:'d1-3', text:'Test on 3-5 sample photos with different lighting and angles'},
-      {id:'d1-4', text:'Return a clean object: embedding vector + bounding box + confidence score'},
-    ]},
-    {id:'day2', date:'Sep 4', title:'Reverse search + verification', items:[
-      {id:'d2-1', text:"Send the source image to SerpApi's Google Lens engine, pull the visual matches"},
-      {id:'d2-2', text:'Filter results down to social-media domains', note:'instagram, x.com/twitter, facebook, linkedin, tiktok, reddit, youtube'},
-      {id:'d2-3', text:'Download each candidate image, re-run DeepFace.verify() against the source embedding'},
-      {id:'d2-4', text:'Keep only candidates above your similarity threshold, pick the best-scoring genuine match'},
-      {id:'d2-5', text:'Log the winning match: url, platform, similarity score, model used'},
-    ]},
-    {id:'day3', date:'Sep 5', title:'Blockchain anchoring', items:[
-      {id:'d3-1', text:'Write the minimal Solidity contract', note:'storeRecord(), a RecordStored event, getRecord() view, see snippet above'},
-      {id:'d3-2', text:'Deploy it to Polygon Amoy via Remix + your burner wallet'},
-      {id:'d3-3', text:'Build the match record JSON', note:'image hash, match url, platform, score, model, UTC timestamp'},
-      {id:'d3-4', text:'Hash the record (SHA-256), call storeRecord() via web3.py'},
-      {id:'d3-5', text:'Optional: pin the full record JSON to IPFS via Pinata, store the CID as metadataURI'},
-      {id:'d3-6', text:'Confirm the transaction on Amoy PolygonScan, save the tx hash'},
-    ]},
-    {id:'day4', date:'Sep 6', title:'Verification tooling + docs', items:[
-      {id:'d4-1', text:'Write verify_record.py, given a tx hash, pull the on-chain hash, recompute the local hash, confirm they match'},
-      {id:'d4-2', text:'Wire it into one CLI entrypoint', note:'<code>python main.py --image photo.jpg</code> runs the full pipeline end to end'},
-      {id:'d4-3', text:'Add error handling + retries for flaky API calls'},
-      {id:'d4-4', text:'Write the README', note:'see the checklist below'},
-      {id:'d4-5', text:'Add .env.example, pin versions in requirements.txt, double-check no secrets are committed'},
-    ]},
-    {id:'day5', date:'Sep 8-9', title:'Polish, no deadline attached', items:[
-      {id:'d5-1', text:'Clone your own repo into a clean folder and follow your own README exactly, fix anything that breaks', note:'passed, real end-to-end run from a fresh clone with no changes needed'},
-      {id:'d5-2', text:'Fill in a real example run in the README', note:'sequenced after the multi-candidate change below, so the example reflects the real shape'},
-      {id:'d5-4', text:'Final commit, push, confirm the repo is public'},
-    ]},
-    {id:'day6', date:'Sep 10+', title:'Three portfolio-credibility additions', items:[
-      {id:'d6-1', text:'verify_candidates() returns the top 3 verified matches with distances, not a forced single best guess', note:'only the best of the three still gets anchored on-chain; see decisions.md'},
-      {id:'d6-2', text:'Verify contracts/FaceRecord.sol source on PolygonScan', note:'free, no gas, gives anyone a Read Contract tab with no wallet needed'},
-      {id:'d6-3', text:'Record a demo GIF of the pipeline running, embed it in the README', note:'VHS hung on Windows (ttyd dies when spawned by vhs.exe), switched to ScreenToGif'},
-      {id:'d6-4', text:'Update the README: multi-candidate output, verified-contract link, demo GIF, real example output'},
-    ]},
-    {id:'day7', date:'Oct 9+', title:'Resume polish: no hackathon framing, a live demo surface', items:[
-      {id:'d7-1', text:'Strip hackathon framing from the README', note:'task banner line, "brief" wording removed'},
-      {id:'d7-2', text:'Polish GitHub repo presentation', note:'topics expanded, homepage URL set to the live proof viewer'},
-      {id:'d7-3', text:'Build a read-only on-chain proof viewer, deploy it free on GitHub Pages', note:'ethers.js v6, no API keys or wallet; a live pipeline demo was rejected, see decisions.md'},
-      {id:'d7-4', text:'Demo GIF, deliberately last', note:'ScreenToGif installed, official recording still pending'},
-    ]},
-  ];
-
-  const README_ITEMS = [
-    'Overview + one-paragraph explanation of the pipeline',
-    'Architecture diagram or ASCII flow: photo, detect, search, verify, chain, proof',
-    'Features mapped directly to the 3 core requirements',
-    'Tech stack table',
-    'Setup / install steps, tested from a clean clone',
-    'Configuration: exact env vars needed, with an .env.example',
-    'How to run: one command',
-    'Example output: sample console log + tx hash + explorer link',
-    'Which blockchain, and why',
-    'Known limitations (see below)',
-    'Consent / ethics note',
-    'Link to the demo recording, and license',
-  ];
-
-  const LIMIT_ITEMS = [
-    "Search coverage is limited to what the search engine has indexed, it won't find everything, especially recent or private posts",
-    "Match accuracy depends on the embedding model and the input photo's quality (angle, lighting, occlusion)",
-    "The blockchain proves the record's hash existed at a specific block and time. It's a tamper-evident timestamp of the claim, not proof the matched content itself is authentic",
-    'No liveness or deepfake detection on the input photo',
-    "Run only with consenting subjects, face search tools' terms of service restrict use for employment, credit, insurance, or tenant-screening decisions",
-    'State plainly which network (testnet vs mainnet) was used and why that trade-off was made',
-    "Note the search API's rate limits / cost ceiling, free tier size, or per-search cost if using a paid engine",
-  ];
-
-  const FINAL_ITEMS = [
-    'All 3 core deliverables demonstrably work end to end',
-    'Repo is public and cloneable',
-    'README has every required section, including a real example run',
-    'Demo recording (optional), if included, is unedited and shows the full run',
-    'Reads well as a standalone portfolio piece, no submission pending',
-  ];
-
-  function allItemIds(){
-    let ids = [];
-    DAYS.forEach(d=>d.items.forEach(i=>ids.push(i.id)));
-    README_ITEMS.forEach((_,i)=>ids.push('readme-'+i));
-    LIMIT_ITEMS.forEach((_,i)=>ids.push('limit-'+i));
-    FINAL_ITEMS.forEach((_,i)=>ids.push('final-'+i));
-    return ids;
-  }
-
-  const pipelineEl = document.getElementById('pipeline');
-  PIPELINE.forEach(s=>{
-    const div = document.createElement('div');
-    div.className = 'pstage ' + s.c;
-    div.innerHTML = `<div class="pnum">${s.n}</div><div class="ptitle">${s.t}</div><div class="pdesc">${s.d}</div>`;
-    pipelineEl.appendChild(div);
-  });
-
-  const reqEl = document.getElementById('reqList');
-  REQUIREMENTS.forEach(r=>{
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="tick">&gt;</span><span>${r}</span>`;
-    reqEl.appendChild(li);
-  });
-
-  const moneyEl = document.getElementById('moneyList');
-  MONEY_RULES.forEach(r=>{
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="tick">$0</span><span>${r}</span>`;
-    moneyEl.appendChild(li);
-  });
-
-  const stackBody = document.getElementById('stackBody');
-  STACK.forEach(row=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="layer">${row[0]}</td><td class="pick">${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
-    stackBody.appendChild(tr);
-  });
-
-  function renderMark(done){
-    return `<span class="mark ${done ? 'done' : 'pending'}">${done ? '✓' : ''}</span>`;
-  }
-
-  function renderCheckList(containerId, items, idPrefix){
-    const container = document.getElementById(containerId);
-    items.forEach((text, i)=>{
-      const id = idPrefix + i;
-      const done = DONE.has(id);
-      const row = document.createElement('div');
-      row.className = 'check-item' + (done ? ' done' : '');
-      row.innerHTML = `${renderMark(done)}<div><span class="item-text">${text}</span></div>`;
-      container.appendChild(row);
-    });
-  }
-
-  function renderDays(){
-    const container = document.getElementById('days');
-
-    DAYS.forEach((day)=>{
-      const done = day.items.filter(i=>DONE.has(i.id)).length;
-      const total = day.items.length;
-      const isOpen = done < total;
-      const details = document.createElement('details');
-      details.className = 'day';
-      if (isOpen) details.open = true;
-
-      const summary = document.createElement('summary');
-      summary.className = 'day-head';
-      summary.innerHTML = `
-        <span class="dcount">${day.date}</span>
-        <span class="dtitle">${day.title}</span>
-        <span class="dprog">${done}/${total}</span>
-        <span class="chev">&gt;</span>
-      `;
-      details.appendChild(summary);
-
-      const inner = document.createElement('div');
-      inner.className = 'day-body-inner';
-      day.items.forEach(item=>{
-        const isDone = DONE.has(item.id);
-        const row = document.createElement('div');
-        row.className = 'check-item' + (isDone ? ' done' : '');
-        row.innerHTML = `${renderMark(isDone)}<div><span class="item-text">${item.text}</span>${item.note ? `<span class="item-note">${item.note}</span>` : ''}</div>`;
-        inner.appendChild(row);
-      });
-      details.appendChild(inner);
-      container.appendChild(details);
-    });
-  }
-
-  renderDays();
-  renderCheckList('readmeList', README_ITEMS, 'readme-');
-  renderCheckList('limitList', LIMIT_ITEMS, 'limit-');
-  renderCheckList('finalList', FINAL_ITEMS, 'final-');
-
-  const ids = allItemIds();
-  const total = ids.length;
-  const done = ids.filter(id=>DONE.has(id)).length;
-  document.getElementById('progressText').textContent = done + ' / ' + total;
-  document.getElementById('progressFill').style.width = (total ? (done/total*100) : 0) + '%';
-})();
-</script>

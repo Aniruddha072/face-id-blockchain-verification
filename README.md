@@ -38,7 +38,7 @@ photo -> detect & encode -> reverse-image search -> verify match -> hash + ancho
 |---|---|---|
 | Face detect + encode | DeepFace (Python), RetinaFace + ArcFace | One-line API, swappable backends, free, self-hosted |
 | Reverse image search | SerpApi, Google Lens engine | Genuine Google reverse-image results, 250 free searches/month, no card |
-| Match verification | `DeepFace.verify()` on every candidate, top 3 kept and ranked by distance | Surfaces ambiguity instead of one forced guess, runs locally for free |
+| Match verification | `DeepFace.verify()` across 3 models (ArcFace, Facenet512, VGG-Face) per candidate, majority vote, top 3 kept and ranked by distance | One model can confidently match the wrong person; ensembling catches that, runs locally for free |
 | Blockchain | Polygon Amoy testnet via Alchemy RPC + web3.py | Free, no card, ~2s finality, PolygonScan lets anyone verify independently |
 | Smart contract | Minimal Solidity: `storeRecord()` + event + `getRecord()` | Gives reviewers an on-chain function to point at, not a raw calldata blob |
 | Contract deployment | `deploy.py`, compiles via py-solc-x and deploys with web3.py | One command instead of a manual Remix step, same wallet key `main.py` already needs |
@@ -105,13 +105,25 @@ python verify_record.py --tx <tx_hash>
 
 Reverse-image search can find visually similar strangers, not just the
 actual subject, especially when a face isn't heavily reposted or tagged
-online. Rather than commit to a single automated guess that might be
-confidently wrong, `verify_candidates()` returns up to the 3
-highest-confidence verified matches (ranked by embedding distance), and
-`main.py` prints all of them. Only the single best match gets hashed and
-anchored on-chain, keeping that part of the pipeline unambiguous, but
-seeing the runner-up candidates (and how close or far their distances are)
-makes it obvious when a match is weak versus genuinely convincing.
+online. A single embedding model can confidently match the wrong person,
+confirmed by a real test run where `ArcFace` alone passed a stranger's
+photo under its own threshold. Two defenses against that:
+
+- **Ensemble verification.** Every candidate is checked against 3
+  independent models (ArcFace, Facenet512, VGG-Face). A candidate only
+  counts as genuinely verified if a majority agree, not just one. Ranking
+  still uses ArcFace's distance (the primary signal), the agreement count
+  travels alongside it.
+- **Ranked, not forced.** `verify_candidates()` returns up to the 3
+  highest-confidence verified matches instead of a single automated guess,
+  and `main.py` prints all of them, so a weak match is visibly weak instead
+  of looking identical to a strong one.
+
+The agreement count (how many of the 3 models confirmed the match) is
+anchored on-chain alongside the record hash, in `FaceRecord.sol`'s
+`modelsAgreed` / `modelsTotal` fields, not just kept in local output. The
+[on-chain proof viewer](https://aniruddha072.github.io/face-id-blockchain-verification/)
+shows it for any anchored record.
 
 ## Example output
 
@@ -119,17 +131,17 @@ Real run against a real photo, `python main.py --image photo.jpg`:
 
 ```
 detected face: confidence=1.000 bbox={'x': 728, 'y': 292, 'w': 398, 'h': 476}
-reverse search: 22 social-media candidate(s)
+reverse search: 21 social-media candidate(s)
 verified 3 candidate(s) as genuine matches:
-  [1] https://www.youtube.com/watch?v=_9Jsb54tL9k (platform=youtube.com, distance=0.5720) (anchoring this one)
-  [2] https://www.youtube.com/watch?v=gXXKBT4KmWs (platform=youtube.com, distance=0.6224)
-  [3] https://www.youtube.com/watch?v=TBr1lSxlNsY (platform=youtube.com, distance=0.6426)
-anchored on-chain: tx c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb
-view proof: https://amoy.polygonscan.com/tx/c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb
-saved record to output/c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb.json
+  [1] https://www.youtube.com/shorts/DzrJ_RFvIkM (platform=youtube.com, distance=0.5836, models agreed=2/3) (anchoring this one)
+  [2] https://m.facebook.com/rahulbasakofficial/videos/... (platform=facebook.com, distance=0.6123, models agreed=2/3)
+  [3] https://www.instagram.com/p/Cxh41WGMCIV/ (platform=instagram.com, distance=0.6125, models agreed=2/3)
+anchored on-chain: tx dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336
+view proof: https://amoy.polygonscan.com/tx/dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336
+saved record to output/dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336.json
 ```
 
-[View this transaction on PolygonScan](https://amoy.polygonscan.com/tx/c1bbec42a8fd7116631c4775dfbbaca03cb58e3a02681ba1807fe8548d6cbccb)
+[View this transaction on PolygonScan](https://amoy.polygonscan.com/tx/dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336)
 
 ## Blockchain choice
 
@@ -139,7 +151,7 @@ Solidity support, and PolygonScan gives anyone an independent way to verify
 the on-chain record without trusting this repo's output.
 
 The deployed contract's source is verified on PolygonScan (exact match):
-[0x80637a622EF860a85c3510b77eb832F356ed08DD](https://amoy.polygonscan.com/address/0x80637a622EF860a85c3510b77eb832F356ed08DD#code).
+[0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99](https://amoy.polygonscan.com/address/0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99#code).
 Anyone can read the actual Solidity source there and call `getRecord()`
 directly from the "Read Contract" tab, no wallet required.
 

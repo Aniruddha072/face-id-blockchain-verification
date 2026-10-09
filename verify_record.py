@@ -24,6 +24,8 @@ RECORD_FIELDS = (
     "model",
     "search_engine",
     "timestamp_utc",
+    "models_agreed",
+    "models_total",
 )
 
 
