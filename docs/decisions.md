@@ -171,3 +171,27 @@ worth spending more time chasing for a demo recording. Switched to
 ScreenToGif instead: a free, actively maintained, Windows-native recorder
 that exports straight to GIF. Less reproducible than a scripted tape file,
 but reliable, which matters more here.
+
+## 2026-10-09 - Resumed as a portfolio piece: read-only proof viewer, not a live pipeline demo
+
+Picked this back up weeks later to finish it properly for a resume. Dropped
+the hackathon framing from README (the task-banner line, "brief" wording).
+
+Considered a public web demo that runs the full pipeline on an uploaded
+photo, since that's the obvious "deploy this" interpretation. Rejected it:
+the SerpApi free tier (~100 searches/month) and the testnet wallet's gas
+would both get exhausted by normal traffic, and more importantly it would
+let any visitor run face-search on any photo they upload, which is the
+exact misuse case the Known Limitations section already warns against.
+
+Built `docs/index.html` instead: a static, read-only page that looks up a
+record hash and calls `getRecord()` on the already-deployed, already
+source-verified contract directly from the browser (ethers.js v6 via CDN,
+no build step). No API keys, no wallet, no secrets, nothing that costs
+money or can be abused, since it only reads data that's already public on
+PolygonScan anyway. Hosted free on GitHub Pages, serving straight from
+`/docs` on `master`, no new branch or deploy step. Verified both the real
+example record and a never-anchored hash resolve correctly, against the
+live contract on the public drpc.org Amoy RPC endpoint (Polygon's own
+`rpc-amoy.polygon.technology` doesn't resolve anymore, drpc.org and
+OnFinality's public endpoint both do).

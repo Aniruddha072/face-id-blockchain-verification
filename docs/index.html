@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Face ID + Blockchain Verification: On-Chain Proof Viewer</title>
+<meta name="description" content="Look up a face-match record anchored on Polygon Amoy by the Face ID + Blockchain Verification pipeline.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E0F13;
+  --panel:#15171E;
+  --panel-raised:#1A1D26;
+  --line:#262A35;
+  --line-soft:#1E212B;
+  --text:#EDEEF2;
+  --text-muted:#8B8E9B;
+  --text-dim:#5C5F6B;
+  --amber:#F0A857;
+  --teal:#5FC7B8;
+  --periwinkle:#8C93F0;
+  --danger:#E2685C;
+  --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--amber);}
+.wrap{max-width:680px; margin:0 auto; padding:48px 20px 80px;}
+.eyebrow{font-family:var(--mono); font-size:12.5px; color:var(--text-dim); letter-spacing:0.02em; margin-bottom:10px;}
+h1{font-size:26px; line-height:1.25; margin:0 0 10px; font-weight:700; letter-spacing:-0.01em;}
+p.lead{color:var(--text-muted); font-size:14.5px; margin:0 0 28px;}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px;}
+label{display:block; font-family:var(--mono); font-size:12px; color:var(--text-dim); margin-bottom:8px;}
+input[type=text]{
+  width:100%; background:var(--panel-raised); border:1px solid var(--line); border-radius:8px;
+  color:var(--text); font-family:var(--mono); font-size:13.5px; padding:11px 12px;
+}
+input[type=text]:focus{outline:2px solid var(--teal); outline-offset:1px;}
+.row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+button{
+  font-family:var(--sans); font-weight:600; font-size:13.5px; border-radius:8px; border:1px solid var(--line);
+  padding:10px 16px; cursor:pointer;
+}
+button.primary{background:var(--teal); color:#0A0B0F; border-color:var(--teal);}
+button.ghost{background:transparent; color:var(--text-muted);}
+button:disabled{opacity:0.6; cursor:default;}
+.result{margin-top:20px; border-top:1px solid var(--line); padding-top:18px; display:none;}
+.result.visible{display:block;}
+.field{display:flex; gap:10px; padding:8px 0; font-size:13.5px; border-bottom:1px solid var(--line-soft);}
+.field:last-child{border-bottom:none;}
+.field .k{color:var(--text-dim); font-family:var(--mono); font-size:12px; flex:0 0 120px; padding-top:2px;}
+.field .v{font-family:var(--mono); font-size:13px; word-break:break-all;}
+.status{font-size:13.5px; margin-top:14px;}
+.status.err{color:var(--danger);}
+.status.ok{color:var(--teal);}
+.status.loading{color:var(--text-muted);}
+.foot-note{font-size:12px; color:var(--text-dim); margin-top:32px;}
+.foot-note a{color:var(--text-muted);}
+code{color:var(--periwinkle);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Face ID + Blockchain Verification</div>
+  <h1>On-chain proof viewer</h1>
+  <p class="lead">
+    Reads live from <code>FaceRecord.sol</code>, deployed and source-verified on Polygon
+    Amoy testnet. Paste a record hash to confirm a match record is genuinely on-chain,
+    unaltered since it was anchored. This page only reads public data, no wallet or
+    API key needed.
+  </p>
+
+  <div class="panel">
+    <label for="hashInput">Record hash (bytes32)</label>
+    <input type="text" id="hashInput" placeholder="0x..." spellcheck="false" autocomplete="off">
+    <div class="row">
+      <button class="primary" id="lookupBtn">Look up</button>
+      <button class="ghost" id="exampleBtn">Try a real example</button>
+    </div>
+    <div id="status" class="status"></div>
+    <div id="result" class="result">
+      <div class="field"><div class="k">recordHash</div><div class="v" id="r-hash"></div></div>
+      <div class="field"><div class="k">submitter</div><div class="v" id="r-submitter"></div></div>
+      <div class="field"><div class="k">timestamp</div><div class="v" id="r-timestamp"></div></div>
+      <div class="field"><div class="k">metadataURI</div><div class="v" id="r-metadata"></div></div>
+    </div>
+  </div>
+
+  <p class="foot-note">
+    Contract: <a id="contractLink" href="#" target="_blank" rel="noopener"></a>
+    (source verified, exact match) &middot;
+    <a href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">source on GitHub</a>
+  </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+const CONTRACT_ADDRESS = "0x80637a622EF860a85c3510b77eb832F356ed08DD";
+const RPC_URL = "https://polygon-amoy.drpc.org";
+const EXAMPLE_HASH = "0xe5ba26add3a15aa1bfa8d30c1819a2067d23c9fe4ad51be72f35299599b992ad";
+const ABI = [
+  "function getRecord(bytes32 recordHash) view returns (tuple(bytes32 recordHash, string metadataURI, address submitter, uint256 timestamp) record)"
+];
+
+document.getElementById("contractLink").href =
+  "https://amoy.polygonscan.com/address/" + CONTRACT_ADDRESS + "#code";
+document.getElementById("contractLink").textContent = CONTRACT_ADDRESS;
+
+const hashInput = document.getElementById("hashInput");
+const statusEl = document.getElementById("status");
+const resultEl = document.getElementById("result");
+const lookupBtn = document.getElementById("lookupBtn");
+
+function setStatus(text, kind) {
+  statusEl.textContent = text;
+  statusEl.className = "status" + (kind ? " " + kind : "");
+}
+
+async function lookup() {
+  const raw = hashInput.value.trim();
+  if (!/^0x[0-9a-fA-F]{64}$/.test(raw)) {
+    setStatus("Enter a valid 32-byte hex hash (0x followed by 64 hex characters).", "err");
+    resultEl.classList.remove("visible");
+    return;
+  }
+
+  lookupBtn.disabled = true;
+  resultEl.classList.remove("visible");
+  setStatus("Reading from Polygon Amoy...", "loading");
+
+  try {
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+    const record = await contract.getRecord(raw);
+
+    if (record.recordHash === ethers.ZeroHash) {
+      setStatus("No record found for this hash on-chain.", "err");
+      lookupBtn.disabled = false;
+      return;
+    }
+
+    document.getElementById("r-hash").textContent = record.recordHash;
+    document.getElementById("r-submitter").textContent = record.submitter;
+    document.getElementById("r-timestamp").textContent =
+      new Date(Number(record.timestamp) * 1000).toISOString().replace("T", " ").replace("Z", " UTC");
+    document.getElementById("r-metadata").textContent = record.metadataURI || "(none, hash-only record)";
+
+    resultEl.classList.add("visible");
+    setStatus("Record found and read directly from the contract.", "ok");
+  } catch (err) {
+    setStatus("Lookup failed: " + (err && err.message ? err.message : String(err)), "err");
+  } finally {
+    lookupBtn.disabled = false;
+  }
+}
+
+lookupBtn.addEventListener("click", lookup);
+hashInput.addEventListener("keydown", (e) => { if (e.key === "Enter") lookup(); });
+document.getElementById("exampleBtn").addEventListener("click", () => {
+  hashInput.value = EXAMPLE_HASH;
+  lookup();
+});
+</script>
+</body>
+</html>

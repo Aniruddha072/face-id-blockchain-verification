@@ -1,10 +1,11 @@
 # Face ID + Blockchain Verification
 
-> HH Goa 2026, Partner Trials, Task #3
-
 A pipeline that detects a face, finds a genuine social media match through
 reverse-image search, and anchors that match on-chain as a tamper-evident,
 verifiable record.
+
+**[Try the live on-chain proof viewer](https://aniruddha072.github.io/face-id-blockchain-verification/)**,
+reads directly from the deployed, source-verified contract, no setup needed.
 
 ## Overview
 
@@ -25,7 +26,7 @@ photo -> detect & encode -> reverse-image search -> verify match -> hash + ancho
 
 ## Requirements mapping
 
-| Brief requirement | How it's met |
+| Requirement | How it's met |
 |---|---|
 | Detect and encode a face from an input image | DeepFace (RetinaFace detector + ArcFace embedding) |
 | Find at least one real, matching social media post via genuine reverse-image search | SerpApi Google Lens engine, filtered to social domains, no hardcoded results |

@@ -1,19 +1,15 @@
 # Handoff
 
-Last updated: 2026-09-10
+Last updated: 2026-10-09
 
 ## Where things stand
 
-The hackathon submission window closed (Sep 7, 11:59 PM IST) without a
-submission. The pipeline works end to end, and the setup steps in the
-README were confirmed to work from a clean clone. All three
-portfolio-credibility additions from the 2026-09-10 decisions.md entry are
-now done except the demo GIF: multi-candidate output, PolygonScan contract
-verification, and a full README pass (real example output, match-
-confidence explainer, verified-contract link). VHS didn't work on Windows
-(ttyd dies when spawned by vhs.exe, a Windows-specific subprocess issue,
-not something worth chasing further), switched to ScreenToGif instead.
-Demo recording is scheduled for the next session.
+Resumed weeks later to finish this as a resume piece. Hackathon framing is
+gone from the README. The project now has a live, free, read-only on-chain
+proof viewer (`docs/index.html`, hosted on GitHub Pages) instead of a demo
+video as the main "try it" surface, plus repo topics/description polish.
+See the 2026-10-09 decisions.md entry for why a full pipeline web demo was
+rejected in favor of this. The demo GIF is the only thing left.
 
 **Done:**
 - Public repo created: https://github.com/Aniruddha072/face-id-blockchain-verification
@@ -45,10 +41,19 @@ Demo recording is scheduled for the next session.
   plus a PolygonScan link, "Blockchain choice" links the verified contract
 - Build-log tracker page (source at docs/build-log.html, hosted separately
   from this repo) updated to match throughout
+- Hackathon framing removed from README (task banner, "brief" wording)
+- Repo topics expanded (blockchain, smart-contracts, python added)
+- `docs/index.html`: static, read-only on-chain proof viewer, live on
+  GitHub Pages at https://aniruddha072.github.io/face-id-blockchain-verification/,
+  repo homepage URL set to it. Looks up a record hash and calls
+  `getRecord()` on the verified contract directly from the browser
+  (ethers.js v6 via CDN). Verified against the live contract, both a real
+  record and a not-found hash, via the public drpc.org Amoy RPC.
 
 **Not done:**
-- Demo GIF: ScreenToGif is installed, a test recording was done, official
-  recording scheduled for the next session
+- Demo GIF: ScreenToGif is installed, a test recording was done weeks ago,
+  official recording still pending (user wants it done last, after
+  everything else)
 - Embed the demo GIF in the README's "Demo recording" section once it exists
 - Final commit and push once the GIF lands
 
@@ -56,4 +61,4 @@ Demo recording is scheduled for the next session.
 
 Record the real demo with ScreenToGif (pipeline run showing the
 multi-candidate output and the on-chain anchor), embed the GIF in the
-README, then the project is essentially done.
+README, then the project is done.
