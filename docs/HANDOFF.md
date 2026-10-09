@@ -54,14 +54,21 @@ is the only thing left.
   sprint checklist into a status page: real anchored record shown as
   proof, ensemble explanation, tech stack, limitations. Reuses the proof
   viewer's exact color/type tokens so the two live pages read as one site
+- Proof viewer redesigned: opens with the real anchored record already
+  loaded (used to be an empty form), result shown as a ledger card with a
+  model-agreement dot indicator, copy buttons on hashes, favicon, Open
+  Graph/Twitter meta tags for a real link-preview card
+- Found and fixed a stray attribution trailer that had slipped into a
+  pushed commit (`a10a521`), despite the long-standing no-AI-traces rule
+  for this repo. Amended and force-pushed since it was the branch tip with
+  nothing on top of it; full history swept afterward and confirmed clean.
+  See decisions.md for how it happened
 
 **Not done:**
 - Demo GIF: ScreenToGif is installed, a test recording was done weeks ago,
-  official recording still pending (user wants it done last, after
-  everything else)
-- Final commit and push once the GIF lands
+  official recording still pending (user wants it done last)
 
 ## Next concrete step
 
-Commit and push everything from this session, then the demo GIF is the
-last remaining item on the whole project.
+The demo GIF is the only thing left on the whole project. Record it with
+ScreenToGif, embed it in the README, final commit and push.

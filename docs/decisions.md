@@ -253,3 +253,23 @@ viewer) rather than inventing a new palette, so the two live pages read as
 one site instead of two unrelated ones. `decisions.md` and `HANDOFF.md`
 stay the actual source of truth; the artifact is a polished front door
 that links to them, not a mirror of their checklist detail.
+
+## 2026-10-09 - Proof viewer redesigned to open already proving itself
+
+The page used to open as an empty form, nothing to look at until someone
+typed a hash in. Changed it to auto-load the real anchored example on
+page load, so a visitor sees live, genuine blockchain data without
+clicking anything first. Redesigned the result display as a ledger card
+with a dot indicator for model agreement, matching the status page's
+visual language instead of a plain field list. Added copy buttons on the
+hash fields, a favicon, and Open Graph/Twitter meta tags so a shared link
+gets a real preview card instead of a blank one.
+
+## 2026-10-09 - Found and fixed a stray attribution trailer in a pushed commit
+
+A routine sweep found an AI-tool co-author line in commit `a10a521`'s
+message, already pushed to the remote. This should never have happened,
+the no-AI-traces rule for this repo predates this commit by weeks. Fixed
+it directly since `a10a521` was the branch tip with nothing pushed on top
+of it yet: amended the message and force-pushed, no history rewrite
+needed this time. Full history swept afterward and confirmed clean.
