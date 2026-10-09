@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Face ID + Blockchain Verification: On-Chain Proof Viewer</title>
-<meta name="description" content="Look up a face-match record anchored on Polygon Amoy by the Face ID + Blockchain Verification pipeline.">
+<meta name="description" content="Look up a face-match record anchored on Polygon Amoy by the Face ID + Blockchain Verification pipeline, read live from the verified contract.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Face ID + Blockchain Verification: On-Chain Proof Viewer">
+<meta property="og:description" content="A face-match record anchored on Polygon Amoy, source-verified contract, read live, no wallet or API key needed.">
+<meta property="og:url" content="https://aniruddha072.github.io/face-id-blockchain-verification/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Face ID + Blockchain Verification">
+<meta name="twitter:description" content="On-chain proof viewer, reads live from a source-verified Polygon Amoy contract.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230E0F13'/%3E%3Cpath d='M9 15l2 2 4-4' stroke='%235FC7B8' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,6 +32,7 @@
   --danger:#E2685C;
   --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color-scheme: dark;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -35,38 +44,51 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 a{color:var(--amber);}
-.wrap{max-width:680px; margin:0 auto; padding:48px 20px 80px;}
-.eyebrow{font-family:var(--mono); font-size:12.5px; color:var(--text-dim); letter-spacing:0.02em; margin-bottom:10px;}
-h1{font-size:26px; line-height:1.25; margin:0 0 10px; font-weight:700; letter-spacing:-0.01em;}
-p.lead{color:var(--text-muted); font-size:14.5px; margin:0 0 28px;}
-.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px;}
+a:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+.wrap{max-width:700px; margin:0 auto; padding:56px 20px 80px;}
+.eyebrow{font-family:var(--mono); font-size:12.5px; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; margin-bottom:12px;}
+h1{font-size:28px; line-height:1.2; margin:0 0 12px; font-weight:700; letter-spacing:-0.01em; text-wrap:balance;}
+p.lead{color:var(--text-muted); font-size:14.5px; max-width:58ch; margin:0 0 30px;}
+code{font-family:var(--mono); color:var(--periwinkle); background:var(--panel-raised); border:1px solid var(--line); padding:1px 6px; border-radius:4px; font-size:0.92em;}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:22px;}
 label{display:block; font-family:var(--mono); font-size:12px; color:var(--text-dim); margin-bottom:8px;}
 input[type=text]{
   width:100%; background:var(--panel-raised); border:1px solid var(--line); border-radius:8px;
   color:var(--text); font-family:var(--mono); font-size:13.5px; padding:11px 12px;
 }
-input[type=text]:focus{outline:2px solid var(--teal); outline-offset:1px;}
 .row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
 button{
   font-family:var(--sans); font-weight:600; font-size:13.5px; border-radius:8px; border:1px solid var(--line);
-  padding:10px 16px; cursor:pointer;
+  padding:10px 16px; cursor:pointer; transition:opacity 0.15s ease;
 }
 button.primary{background:var(--teal); color:#0A0B0F; border-color:var(--teal);}
 button.ghost{background:transparent; color:var(--text-muted);}
-button:disabled{opacity:0.6; cursor:default;}
-.result{margin-top:20px; border-top:1px solid var(--line); padding-top:18px; display:none;}
-.result.visible{display:block;}
-.field{display:flex; gap:10px; padding:8px 0; font-size:13.5px; border-bottom:1px solid var(--line-soft);}
-.field:last-child{border-bottom:none;}
-.field .k{color:var(--text-dim); font-family:var(--mono); font-size:12px; flex:0 0 120px; padding-top:2px;}
-.field .v{font-family:var(--mono); font-size:13px; word-break:break-all;}
-.status{font-size:13.5px; margin-top:14px;}
+button:disabled{opacity:0.55; cursor:default;}
+button:not(:disabled):hover{opacity:0.88;}
+.status{font-size:13.5px; margin-top:14px; min-height:18px;}
 .status.err{color:var(--danger);}
 .status.ok{color:var(--teal);}
 .status.loading{color:var(--text-muted);}
+
+.ledger{margin-top:24px; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; opacity:0; transform:translateY(4px); transition:opacity 0.25s ease, transform 0.25s ease;}
+.ledger.visible{opacity:1; transform:none;}
+.ledger-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+.vote-dots{display:flex; gap:5px;}
+.vote-dot{width:11px; height:11px; border-radius:50%; background:var(--line);}
+.vote-dot.on{background:var(--teal);}
+.agreement-text{font-family:var(--mono); font-size:12px; color:var(--text-muted);}
+.ledger-body{padding:2px 18px;}
+.lfield{display:flex; gap:14px; padding:11px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; align-items:flex-start; flex-wrap:wrap;}
+.lfield:last-child{border-bottom:none;}
+.lfield .k{color:var(--text-dim); font-family:var(--mono); font-size:11.5px; flex:0 0 110px; padding-top:3px;}
+.lfield .vwrap{display:flex; align-items:flex-start; gap:8px; flex:1 1 auto; min-width:0;}
+.lfield .v{font-family:var(--mono); font-size:13px; word-break:break-all; min-width:0;}
+.copy-btn{flex-shrink:0; background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--mono); font-size:10.5px; padding:3px 8px; border-radius:5px; cursor:pointer; margin-top:1px;}
+.copy-btn:hover{color:var(--text-muted); border-color:var(--text-dim);}
+
 .foot-note{font-size:12px; color:var(--text-dim); margin-top:32px;}
 .foot-note a{color:var(--text-muted);}
-code{color:var(--periwinkle);}
 </style>
 </head>
 <body>
@@ -86,15 +108,22 @@ code{color:var(--periwinkle);}
     <input type="text" id="hashInput" placeholder="0x..." spellcheck="false" autocomplete="off">
     <div class="row">
       <button class="primary" id="lookupBtn">Look up</button>
-      <button class="ghost" id="exampleBtn">Try a real example</button>
+      <button class="ghost" id="exampleBtn">Load the real example</button>
     </div>
     <div id="status" class="status"></div>
-    <div id="result" class="result">
-      <div class="field"><div class="k">recordHash</div><div class="v" id="r-hash"></div></div>
-      <div class="field"><div class="k">submitter</div><div class="v" id="r-submitter"></div></div>
-      <div class="field"><div class="k">timestamp</div><div class="v" id="r-timestamp"></div></div>
-      <div class="field"><div class="k">model agreement</div><div class="v" id="r-agreement"></div></div>
-      <div class="field"><div class="k">metadataURI</div><div class="v" id="r-metadata"></div></div>
+
+    <div id="ledger" class="ledger">
+      <div class="ledger-head">
+        <div class="vote-dots" id="voteDots" aria-hidden="true"></div>
+        <div class="agreement-text" id="agreementText"></div>
+      </div>
+      <div class="ledger-body">
+        <div class="lfield"><div class="k">record hash</div><div class="vwrap"><div class="v" id="r-hash"></div><button class="copy-btn" data-copy="r-hash">copy</button></div></div>
+        <div class="lfield"><div class="k">transaction</div><div class="vwrap"><div class="v" id="r-tx"></div></div></div>
+        <div class="lfield"><div class="k">submitter</div><div class="vwrap"><div class="v" id="r-submitter"></div><button class="copy-btn" data-copy="r-submitter">copy</button></div></div>
+        <div class="lfield"><div class="k">timestamp</div><div class="vwrap"><div class="v" id="r-timestamp"></div></div></div>
+        <div class="lfield"><div class="k">metadataURI</div><div class="vwrap"><div class="v" id="r-metadata"></div></div></div>
+      </div>
     </div>
   </div>
 
@@ -110,6 +139,7 @@ code{color:var(--periwinkle);}
 const CONTRACT_ADDRESS = "0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99";
 const RPC_URL = "https://polygon-amoy.drpc.org";
 const EXAMPLE_HASH = "0x4a377bc19ea1ff7714f49ef659fc5c9772d5640081459ed42a30135f55428317";
+const EXAMPLE_TX = "dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336";
 const ABI = [
   "function getRecord(bytes32 recordHash) view returns (tuple(bytes32 recordHash, string metadataURI, address submitter, uint256 timestamp, uint8 modelsAgreed, uint8 modelsTotal) record)"
 ];
@@ -120,7 +150,7 @@ document.getElementById("contractLink").textContent = CONTRACT_ADDRESS;
 
 const hashInput = document.getElementById("hashInput");
 const statusEl = document.getElementById("status");
-const resultEl = document.getElementById("result");
+const ledgerEl = document.getElementById("ledger");
 const lookupBtn = document.getElementById("lookupBtn");
 
 function setStatus(text, kind) {
@@ -128,16 +158,26 @@ function setStatus(text, kind) {
   statusEl.className = "status" + (kind ? " " + kind : "");
 }
 
+function renderVoteDots(agreed, total) {
+  const dots = document.getElementById("voteDots");
+  dots.innerHTML = "";
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement("div");
+    d.className = "vote-dot" + (i < agreed ? " on" : "");
+    dots.appendChild(d);
+  }
+}
+
 async function lookup() {
   const raw = hashInput.value.trim();
   if (!/^0x[0-9a-fA-F]{64}$/.test(raw)) {
     setStatus("Enter a valid 32-byte hex hash (0x followed by 64 hex characters).", "err");
-    resultEl.classList.remove("visible");
+    ledgerEl.classList.remove("visible");
     return;
   }
 
   lookupBtn.disabled = true;
-  resultEl.classList.remove("visible");
+  ledgerEl.classList.remove("visible");
   setStatus("Reading from Polygon Amoy...", "loading");
 
   try {
@@ -151,15 +191,23 @@ async function lookup() {
       return;
     }
 
+    renderVoteDots(Number(record.modelsAgreed), Number(record.modelsTotal));
+    document.getElementById("agreementText").textContent =
+      record.modelsAgreed + " of " + record.modelsTotal + " models agreed";
     document.getElementById("r-hash").textContent = record.recordHash;
     document.getElementById("r-submitter").textContent = record.submitter;
     document.getElementById("r-timestamp").textContent =
       new Date(Number(record.timestamp) * 1000).toISOString().replace("T", " ").replace("Z", " UTC");
-    document.getElementById("r-agreement").textContent =
-      record.modelsAgreed + " of " + record.modelsTotal + " face-verification models agreed";
     document.getElementById("r-metadata").textContent = record.metadataURI || "(none, hash-only record)";
 
-    resultEl.classList.add("visible");
+    const txField = document.getElementById("r-tx");
+    if (raw === EXAMPLE_HASH) {
+      txField.innerHTML = '<a href="https://amoy.polygonscan.com/tx/' + EXAMPLE_TX + '" target="_blank" rel="noopener">' + EXAMPLE_TX + "</a>";
+    } else {
+      txField.textContent = "(not tracked by this page, search the record hash on PolygonScan)";
+    }
+
+    ledgerEl.classList.add("visible");
     setStatus("Record found and read directly from the contract.", "ok");
   } catch (err) {
     setStatus("Lookup failed: " + (err && err.message ? err.message : String(err)), "err");
@@ -174,6 +222,28 @@ document.getElementById("exampleBtn").addEventListener("click", () => {
   hashInput.value = EXAMPLE_HASH;
   lookup();
 });
+
+document.querySelectorAll(".copy-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const text = document.getElementById(btn.dataset.copy).textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = btn.textContent;
+      btn.textContent = "copied";
+      setTimeout(() => { btn.textContent = original; }, 1200);
+    } catch (e) {
+      const range = document.createRange();
+      range.selectNodeContents(document.getElementById(btn.dataset.copy));
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+});
+
+// Open with the real example already loaded, so the page proves itself on arrival.
+hashInput.value = EXAMPLE_HASH;
+lookup();
 </script>
 </body>
 </html>
