@@ -169,11 +169,6 @@ public social presence. It is not intended, and should not be used, for
 employment, credit, insurance, tenant-screening, or any other decision about
 a person without their knowledge and consent.
 
-## Demo recording
-
-*(TODO: link to an unedited screen recording of the full pipeline running
-end to end)*
-
 ## License
 
 [MIT](LICENSE)
