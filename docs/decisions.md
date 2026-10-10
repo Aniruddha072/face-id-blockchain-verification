@@ -603,3 +603,9 @@ instead of just removing the artifact. Replaced
 User also asked to stop the README from accumulating further unprompted.
 Noted as a standing rule in memory: fix or replace what's asked, don't
 keep adding new images or sections on top of it.
+
+Checked the rest of the gallery after the fact and the hero screenshot and
+the verify-section screenshot had the exact same scrollbar artifact, only
+the record one had actually been retaken. Fixed both the same way. The
+two deck slides don't scroll (the fixed-stage deck sets `overflow:hidden`
+on `html`/`body`), so they were never affected.
