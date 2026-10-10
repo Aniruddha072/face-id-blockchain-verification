@@ -124,6 +124,17 @@ project is considered complete; the demo GIF was deliberately skipped
   the real anchored record, measured accuracy, the security review, and
   the consent/ethics stance, all real project data. See decisions.md for
   a layout bug caught and fixed before shipping
+- Visual identity replaced on the proof viewer and the deck: the
+  darkroom/proof-sheet look (safelight glow, film grain, register-mark
+  frames) is gone, replaced by Ethereal Glass (OLED black, violet/emerald
+  orbs, double-bezel glass cards, a floating island nav with a hamburger
+  menu on the proof viewer) per a third-party `high-end-visual-design`
+  skill the user installed and explicitly asked to apply, full replace,
+  not a blend. All existing JS/functionality retested and unchanged. The
+  status artifact was left as-is and is now visually out of sync with
+  these two pages; flagged, not fixed, since it wasn't in scope. See
+  decisions.md for the conflict this skill's own rules created and how
+  it was resolved
 
 ## Next concrete step
 

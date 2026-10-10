@@ -12,26 +12,29 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Face ID + Blockchain Verification">
 <meta name="twitter:description" content="On-chain proof viewer, reads live from a source-verified Polygon Amoy contract.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='3' fill='%2315120E'/%3E%3Cpath d='M9 15l2 2 4-4' stroke='%237FB069' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23050505'/%3E%3Cpath d='M9 15l2 2 4-4' stroke='%232DD4A7' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#15120E;
-  --panel:#1E1811;
-  --panel-raised:#241D15;
-  --line:#3C3225;
-  --line-soft:#2C2419;
-  --ink:#F3EDE3;
-  --ink-muted:#ADA08B;
-  --ink-dim:#6E6350;
-  --signal:#E6402A;
-  --develop:#7FB069;
-  --fail:#B2362A;
-  --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --display:'Space Grotesk', var(--sans);
+  --bg:#050505;
+  --surface:#0b0b0d;
+  --surface-raised:#121214;
+  --glass-bg:rgba(255,255,255,0.045);
+  --glass-bg-strong:rgba(255,255,255,0.08);
+  --glass-border:rgba(255,255,255,0.09);
+  --line-soft:rgba(255,255,255,0.06);
+  --ink:#F5F5F7;
+  --ink-muted:rgba(245,245,247,0.62);
+  --ink-dim:rgba(245,245,247,0.38);
+  --violet:#9B6BFF;
+  --emerald:#2DD4A7;
+  --rose:#FB6A6A;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-sans:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ease:cubic-bezier(0.32,0.72,0,1);
   color-scheme: dark;
 }
 *{box-sizing:border-box;}
@@ -39,137 +42,161 @@ html,body{margin:0;padding:0;}
 body{
   background:var(--bg);
   color:var(--ink);
-  font-family:var(--sans);
-  line-height:1.5;
+  font-family:var(--font-sans);
+  line-height:1.55;
   -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
 }
-@media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
-a{color:var(--signal);}
-a:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid var(--develop); outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+a{color:inherit;}
+a:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid var(--emerald); outline-offset:2px;}
+code{font-family:var(--font-mono); color:var(--ink); background:var(--surface-raised); border:1px solid var(--glass-border); padding:2px 7px; border-radius:6px; font-size:0.9em;}
 
-body::before{
-  content:""; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:0.05; mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.glow{position:absolute; top:-180px; left:50%; transform:translateX(-50%); width:720px; height:460px; max-width:160vw; background:radial-gradient(circle, rgba(230,64,42,0.24), rgba(230,64,42,0) 68%); filter:blur(6px); pointer-events:none; z-index:0;}
+/* ===== Ambient orbs: the vibe's only decoration, fixed so they never cause scroll repaint ===== */
+.orb{position:fixed; border-radius:50%; filter:blur(90px); pointer-events:none; z-index:0; opacity:0.55;}
+.orb-violet{width:620px; height:620px; top:-220px; left:-160px; background:radial-gradient(circle, var(--violet), transparent 70%);}
+.orb-emerald{width:560px; height:560px; bottom:-240px; right:-180px; background:radial-gradient(circle, var(--emerald), transparent 70%); opacity:0.35;}
 
-.filmstrip{position:relative; z-index:2; height:11px; background-color:var(--panel); background-image:radial-gradient(circle at 11px 5.5px, var(--bg) 3px, transparent 3.4px); background-repeat:repeat-x; background-size:22px 11px; border-bottom:1px solid var(--line);}
+/* ===== Fluid island nav ===== */
+.island-nav{position:fixed; top:22px; left:50%; transform:translateX(-50%); z-index:60; width:min(680px, calc(100% - 28px));}
+.island-inner{display:flex; align-items:center; justify-content:space-between; gap:14px; background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:999px; padding:9px 9px 9px 20px; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); box-shadow:0 10px 40px rgba(0,0,0,0.35);}
+.island-brand{font-family:var(--font-display); font-weight:600; font-size:14.5px; letter-spacing:-0.01em; white-space:nowrap;}
+.island-links{display:none; gap:26px; align-items:center;}
+.island-links a{font-size:13.5px; color:var(--ink-muted); text-decoration:none; transition:color 0.2s var(--ease);}
+.island-links a:hover{color:var(--ink);}
+.hamburger{width:38px; height:38px; border-radius:50%; background:var(--glass-bg); border:1px solid var(--glass-border); position:relative; cursor:pointer; flex-shrink:0;}
+.hamburger span{position:absolute; left:50%; top:50%; width:14px; height:1.5px; background:var(--ink); transform:translate(-50%,-50%); transition:transform 0.4s var(--ease), opacity 0.2s var(--ease);}
+.hamburger span:nth-child(1){margin-top:-3px;}
+.hamburger span:nth-child(2){margin-top:3px;}
+.hamburger.open span:nth-child(1){margin-top:0; transform:translate(-50%,-50%) rotate(45deg);}
+.hamburger.open span:nth-child(2){margin-top:0; transform:translate(-50%,-50%) rotate(-45deg);}
+@media (min-width:760px){ .island-links{display:flex;} .hamburger{display:none;} }
 
-.wrap{position:relative; z-index:2; max-width:700px; margin:0 auto; padding:48px 20px 80px;}
-.slate{display:inline-block; font-family:var(--mono); font-size:12.5px; color:var(--ink-muted); border-left:3px solid var(--signal); padding:2px 0 2px 10px; margin-bottom:18px;}
-h1{font-family:var(--display); font-size:36px; line-height:1.14; margin:0 0 14px; font-weight:700; letter-spacing:-0.02em; text-wrap:balance;}
-p.lead{color:var(--ink-muted); font-size:14.5px; max-width:58ch; margin:0 0 30px;}
-code{font-family:var(--mono); color:var(--ink); background:var(--panel-raised); border:1px solid var(--line); padding:1px 6px; border-radius:3px; font-size:0.92em;}
+.nav-overlay{position:fixed; inset:0; z-index:55; background:rgba(5,5,5,0.88); backdrop-filter:blur(36px); -webkit-backdrop-filter:blur(36px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.4s var(--ease);}
+.nav-overlay.open{opacity:1; pointer-events:auto;}
+.overlay-links{display:flex; flex-direction:column; gap:26px; text-align:center;}
+.overlay-link{font-family:var(--font-display); font-size:30px; font-weight:600; color:var(--ink); text-decoration:none; opacity:0; transform:translateY(40px); transition:opacity 0.5s var(--ease), transform 0.5s var(--ease);}
+.nav-overlay.open .overlay-link{opacity:1; transform:translateY(0);}
 
-.viewfinders{display:flex; gap:14px; margin:0 0 36px; flex-wrap:wrap; align-items:flex-end;}
-.vf{width:48px; height:48px; flex-shrink:0;
-  background:
-    linear-gradient(var(--line),var(--line)) top left/13px 2px no-repeat,
-    linear-gradient(var(--line),var(--line)) top left/2px 13px no-repeat,
-    linear-gradient(var(--line),var(--line)) top right/13px 2px no-repeat,
-    linear-gradient(var(--line),var(--line)) top right/2px 13px no-repeat,
-    linear-gradient(var(--line),var(--line)) bottom left/13px 2px no-repeat,
-    linear-gradient(var(--line),var(--line)) bottom left/2px 13px no-repeat,
-    linear-gradient(var(--line),var(--line)) bottom right/13px 2px no-repeat,
-    linear-gradient(var(--line),var(--line)) bottom right/2px 13px no-repeat;
-}
-.vf.match{
-  background:
-    linear-gradient(var(--signal),var(--signal)) top left/13px 2px no-repeat,
-    linear-gradient(var(--signal),var(--signal)) top left/2px 13px no-repeat,
-    linear-gradient(var(--signal),var(--signal)) top right/13px 2px no-repeat,
-    linear-gradient(var(--signal),var(--signal)) top right/2px 13px no-repeat,
-    linear-gradient(var(--signal),var(--signal)) bottom left/13px 2px no-repeat,
-    linear-gradient(var(--signal),var(--signal)) bottom left/2px 13px no-repeat,
-    linear-gradient(var(--signal),var(--signal)) bottom right/13px 2px no-repeat,
-    linear-gradient(var(--signal),var(--signal)) bottom right/2px 13px no-repeat;
-  display:flex; align-items:center; justify-content:center;
-}
-.vf.match svg{width:18px; height:18px;}
-.viewfinders-cap{flex-basis:100%; font-size:12px; color:var(--ink-dim); margin-top:2px;}
+/* ===== Layout ===== */
+.wrap{position:relative; z-index:1; max-width:760px; margin:0 auto; padding:140px 24px 100px;}
+.eyebrow-pill{display:inline-flex; align-items:center; gap:8px; font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--ink-muted); background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:999px; padding:7px 16px 7px 12px; margin-bottom:28px;}
+.eyebrow-pill .dot{width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 10px var(--emerald);}
+h1{font-family:var(--font-display); font-size:clamp(36px,6vw,58px); line-height:1.08; margin:0 0 20px; font-weight:700; letter-spacing:-0.025em;}
+h1 .grad{background:linear-gradient(100deg, var(--violet), var(--emerald)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+p.lead{color:var(--ink-muted); font-size:16px; line-height:1.7; max-width:62ch; margin:0 0 56px;}
 
-.frame{position:relative; background:var(--panel); border:1px solid var(--line); border-radius:2px; padding:22px;}
-.frame + .frame{margin-top:26px;}
-.frame::before, .frame::after{content:""; position:absolute; width:11px; height:11px; pointer-events:none;}
-.frame::before{top:-1px; left:-1px; border-top:2px solid var(--signal); border-left:2px solid var(--signal);}
-.frame::after{bottom:-1px; right:-1px; border-bottom:2px solid var(--signal); border-right:2px solid var(--signal);}
-.frame-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:0 0 18px; padding-bottom:14px; border-bottom:1px solid var(--line);}
-.frame-label{font-family:var(--display); font-size:15.5px; font-weight:600; margin:0; letter-spacing:-0.005em;}
-.frame-tag{font-family:var(--sans); font-size:11.5px; font-weight:500; color:var(--ink-dim); border:1px solid var(--line); border-radius:99px; padding:2px 10px;}
-.frame-tag.everyone{color:var(--develop); border-color:var(--develop);}
-.hint{font-size:12.5px; color:var(--ink-dim); margin:-4px 0 14px;}
-.example-badge{font-family:var(--sans); font-size:11px; font-weight:500; color:var(--ink-dim); border:1px solid var(--line); border-radius:99px; padding:2px 9px;}
+/* ===== Hero candidate tiles (double-bezel minis) ===== */
+.tiles{display:flex; gap:12px; margin:0 0 72px; flex-wrap:wrap; align-items:flex-end;}
+.tile-outer{width:60px; height:60px; flex-shrink:0; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:18px; padding:5px;}
+.tile-inner{width:100%; height:100%; border-radius:14px; background:var(--surface); box-shadow:inset 0 1px 1px rgba(255,255,255,0.06);}
+.tile-outer.match{border-color:rgba(45,212,167,0.45); background:rgba(45,212,167,0.08);}
+.tile-outer.match .tile-inner{background:rgba(45,212,167,0.1); box-shadow:inset 0 1px 1px rgba(45,212,167,0.25); display:flex; align-items:center; justify-content:center;}
+.tile-outer.match svg{width:22px; height:22px;}
+.tiles-cap{flex-basis:100%; font-size:13px; color:var(--ink-dim); margin-top:8px; max-width:48ch;}
 
-label{display:block; font-family:var(--sans); font-size:12.5px; font-weight:500; color:var(--ink-dim); margin-bottom:8px;}
+/* ===== Double-bezel cards ===== */
+.bezel{margin-bottom:28px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:32px; padding:7px;
+  opacity:0; transform:translateY(24px); filter:blur(6px); transition:opacity 0.8s var(--ease), transform 0.8s var(--ease), filter 0.8s var(--ease);}
+.bezel.in-view{opacity:1; transform:translateY(0); filter:blur(0);}
+.bezel-inner{background:var(--surface); border-radius:26px; padding:36px; box-shadow:inset 0 1px 1px rgba(255,255,255,0.07);}
+@media (max-width:540px){ .bezel{border-radius:26px;} .bezel-inner{padding:24px; border-radius:20px;} }
+
+.card-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 20px; padding-bottom:20px; border-bottom:1px solid var(--line-soft);}
+.card-title{font-family:var(--font-display); font-size:19px; font-weight:600; margin:0; letter-spacing:-0.01em;}
+.badge{font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:0.04em; color:var(--ink-dim); border:1px solid var(--glass-border); background:var(--glass-bg); border-radius:999px; padding:4px 12px;}
+.badge.on{color:var(--emerald); border-color:rgba(45,212,167,0.35); background:rgba(45,212,167,0.08);}
+.hint{font-size:13px; color:var(--ink-dim); margin:0 0 18px; line-height:1.6;}
+p.sublead{color:var(--ink-muted); font-size:14px; line-height:1.7; margin:0 0 22px; max-width:60ch;}
+
+label{display:block; font-family:var(--font-sans); font-size:12.5px; font-weight:600; color:var(--ink-dim); margin-bottom:9px;}
 input[type=text]{
-  width:100%; background:var(--panel-raised); border:1px solid var(--line); border-radius:4px;
-  color:var(--ink); font-family:var(--mono); font-size:13.5px; padding:11px 12px;
+  width:100%; background:var(--surface-raised); border:1px solid var(--glass-border); border-radius:14px;
+  color:var(--ink); font-family:var(--font-mono); font-size:13.5px; padding:14px 16px; transition:border-color 0.2s var(--ease);
 }
-.row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+input[type=text]:focus{border-color:rgba(45,212,167,0.5);}
+.row{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
 button{
-  font-family:var(--sans); font-weight:600; font-size:13.5px; border-radius:4px; border:1px solid var(--line);
-  padding:10px 16px; cursor:pointer; transition:opacity 0.15s ease;
+  font-family:var(--font-sans); font-weight:600; font-size:13.5px; border-radius:999px; border:1px solid transparent;
+  padding:12px 22px; cursor:pointer; transition:transform 0.2s var(--ease), opacity 0.2s var(--ease), background 0.2s var(--ease);
 }
-button.primary{background:var(--signal); color:#15120E; border-color:var(--signal);}
-button.ghost{background:transparent; color:var(--ink-muted);}
-button:disabled{opacity:0.55; cursor:default;}
-button:not(:disabled):hover{opacity:0.88;}
-.status{font-size:13.5px; margin-top:14px; min-height:18px;}
-.status.err{color:var(--fail);}
-.status.ok{color:var(--develop);}
+button.primary{background:linear-gradient(100deg, var(--violet), var(--emerald)); color:#060608;}
+button.ghost{background:var(--glass-bg); color:var(--ink-muted); border-color:var(--glass-border);}
+button:disabled{opacity:0.5; cursor:default;}
+button:not(:disabled):hover{opacity:0.9; transform:translateY(-1px);}
+button:not(:disabled):active{transform:scale(0.98);}
+.status{font-size:13.5px; margin-top:16px; min-height:18px;}
+.status.err{color:var(--rose);}
+.status.ok{color:var(--emerald);}
 .status.loading{color:var(--ink-muted);}
 
-.ledger{margin-top:22px; background:var(--panel-raised); border:1px solid var(--line); border-radius:3px; overflow:hidden; opacity:0; transform:translateY(4px); transition:opacity 0.25s ease, transform 0.25s ease;}
+.ledger{margin-top:24px; background:var(--surface-raised); border:1px solid var(--glass-border); border-radius:20px; overflow:hidden; opacity:0; transform:translateY(8px); transition:opacity 0.3s var(--ease), transform 0.3s var(--ease);}
 .ledger.visible{opacity:1; transform:none;}
-.ledger-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
-.vote-dots{display:flex; gap:5px;}
-.vote-dot{width:11px; height:11px; border-radius:50%; background:var(--line);}
-.vote-dot.on{background:var(--signal);}
-.agreement-text{font-family:var(--mono); font-size:12px; color:var(--ink-muted);}
-.ledger-body{padding:2px 18px;}
-.lfield{display:flex; gap:14px; padding:11px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; align-items:flex-start; flex-wrap:wrap;}
+.ledger-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line-soft); flex-wrap:wrap;}
+.vote-dots{display:flex; gap:6px;}
+.vote-dot{width:10px; height:10px; border-radius:50%; background:var(--glass-border);}
+.vote-dot.on{background:var(--emerald); box-shadow:0 0 8px rgba(45,212,167,0.6);}
+.agreement-text{font-family:var(--font-mono); font-size:12px; color:var(--ink-muted);}
+.example-badge{font-family:var(--font-sans); font-size:11px; font-weight:600; color:var(--ink-dim); border:1px solid var(--glass-border); border-radius:999px; padding:3px 11px;}
+.ledger-body{padding:4px 20px;}
+.lfield{display:flex; gap:14px; padding:13px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; align-items:flex-start; flex-wrap:wrap;}
 .lfield:last-child{border-bottom:none;}
-.lfield .k{color:var(--ink-dim); font-family:var(--sans); font-size:12px; font-weight:500; flex:0 0 110px; padding-top:3px;}
+.lfield .k{color:var(--ink-dim); font-family:var(--font-sans); font-size:12px; font-weight:600; flex:0 0 110px; padding-top:3px;}
 .lfield .vwrap{display:flex; align-items:flex-start; gap:8px; flex:1 1 auto; min-width:0;}
-.lfield .v{font-family:var(--mono); font-size:13px; word-break:break-all; min-width:0;}
-.copy-btn{flex-shrink:0; background:none; border:1px solid var(--line); color:var(--ink-dim); font-family:var(--sans); font-size:11px; padding:3px 8px; border-radius:3px; cursor:pointer; margin-top:1px;}
-.copy-btn:hover{color:var(--ink-muted); border-color:var(--ink-dim);}
+.lfield .v{font-family:var(--font-mono); font-size:13px; word-break:break-all; min-width:0;}
+.copy-btn{flex-shrink:0; background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--ink-dim); font-family:var(--font-sans); font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; cursor:pointer; margin-top:1px; transition:color 0.2s var(--ease);}
+.copy-btn:hover{color:var(--ink);}
 
-.foot-note{font-size:12px; color:var(--ink-dim); margin-top:32px;}
-.foot-note a{color:var(--ink-muted);}
+.foot-note{font-size:12.5px; color:var(--ink-dim); margin-top:36px; text-align:center;}
+.foot-note a{color:var(--ink-muted); text-decoration:underline; text-decoration-color:var(--glass-border);}
 
-p.sublead{color:var(--ink-muted); font-size:13.5px; margin:0 0 18px; max-width:58ch;}
-.file-row{display:flex; flex-direction:column; gap:14px; margin-bottom:16px;}
-.file-field label{margin-bottom:6px;}
+.file-row{display:flex; flex-direction:column; gap:16px; margin-bottom:18px;}
+.file-field label{margin-bottom:8px;}
 input[type=file]{
-  width:100%; background:var(--panel-raised); border:1px solid var(--line); border-radius:4px;
-  color:var(--ink-muted); font-family:var(--sans); font-size:13px; padding:9px 10px;
+  width:100%; background:var(--surface-raised); border:1px solid var(--glass-border); border-radius:14px;
+  color:var(--ink-muted); font-family:var(--font-sans); font-size:13px; padding:12px 14px;
 }
-.checklist{margin-top:18px; display:none;}
+.checklist{margin-top:20px; display:none;}
 .checklist.visible{display:block;}
-.check-row{display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; align-items:flex-start;}
+.check-row{display:flex; gap:12px; padding:11px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; align-items:flex-start;}
 .check-row:last-child{border-bottom:none;}
-.check-row .icon{flex-shrink:0; width:18px; font-family:var(--mono); font-weight:700;}
-.check-row .icon.pass{color:var(--develop);}
-.check-row .icon.fail{color:var(--fail);}
+.check-row .icon{flex-shrink:0; width:20px; font-family:var(--font-mono); font-weight:700;}
+.check-row .icon.pass{color:var(--emerald);}
+.check-row .icon.fail{color:var(--rose);}
 .check-row .text{min-width:0;}
-.check-row .text .detail{display:block; font-size:12px; color:var(--ink-dim); font-family:var(--mono); margin-top:2px; word-break:break-all;}
-
-@media (max-width:480px){
-  .wrap{padding:40px 16px 64px;}
-  .frame{padding:18px;}
-  .vf{width:38px; height:38px;}
-  .vf.match svg{width:15px; height:15px;}
-  .glow{top:-140px; height:360px;}
-}
+.check-row .text .detail{display:block; font-size:12px; color:var(--ink-dim); font-family:var(--font-mono); margin-top:3px; word-break:break-all;}
 </style>
 </head>
 <body>
-<div class="filmstrip" aria-hidden="true"></div>
-<div class="glow" aria-hidden="true"></div>
+<div class="orb orb-violet" aria-hidden="true"></div>
+<div class="orb orb-emerald" aria-hidden="true"></div>
+
+<nav class="island-nav">
+  <div class="island-inner">
+    <span class="island-brand">Face·ID</span>
+    <div class="island-links">
+      <a href="#lookup">Look up</a>
+      <a href="#verify">Verify yours</a>
+      <a href="presentation.html">Deck</a>
+      <a href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="nav-overlay" id="navOverlay">
+  <div class="overlay-links">
+    <a class="overlay-link" href="#lookup">Look up a record</a>
+    <a class="overlay-link" href="#verify">Verify your own record</a>
+    <a class="overlay-link" href="presentation.html">Walkthrough deck</a>
+    <a class="overlay-link" href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">Source on GitHub</a>
+  </div>
+</div>
+
 <div class="wrap">
-  <div class="slate">Polygon Amoy testnet, verified contract</div>
-  <h1>On-chain proof viewer</h1>
+  <div class="eyebrow-pill"><span class="dot"></span>Live on Polygon Amoy, verified contract</div>
+  <h1>A face match you don't just have to <span class="grad">take our word for.</span></h1>
   <p class="lead">
     Two things live on this page. Anyone can look up a record hash below and
     read it straight from <code>FaceRecord.sol</code> on Polygon Amoy, no
@@ -177,75 +204,77 @@ input[type=file]{
     hash itself. Further down is a second tool just for people who've run the
     pipeline locally; skip it if that's not you. For the full story behind
     this project, see the
-    <a href="https://github.com/Aniruddha072/face-id-blockchain-verification#readme" target="_blank" rel="noopener">README</a>.
+    <a href="https://github.com/Aniruddha072/face-id-blockchain-verification#readme" target="_blank" rel="noopener" style="text-decoration:underline; text-decoration-color:var(--glass-border);">README</a>.
   </p>
 
-  <div class="viewfinders" aria-hidden="true">
-    <div class="vf"></div>
-    <div class="vf"></div>
-    <div class="vf match">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7FB069" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4 10-10"/></svg>
-    </div>
-    <div class="vf"></div>
-    <div class="vf"></div>
-    <div class="viewfinders-cap">Reverse search turns up many candidates. Ensemble verification is what tells the real match from a stranger who just looks similar.</div>
+  <div class="tiles" aria-hidden="true">
+    <div class="tile-outer"><div class="tile-inner"></div></div>
+    <div class="tile-outer"><div class="tile-inner"></div></div>
+    <div class="tile-outer match"><div class="tile-inner"><svg viewBox="0 0 24 24" fill="none" stroke="#2DD4A7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4 10-10"/></svg></div></div>
+    <div class="tile-outer"><div class="tile-inner"></div></div>
+    <div class="tile-outer"><div class="tile-inner"></div></div>
+    <div class="tiles-cap">Reverse search turns up many candidates. Ensemble verification is what tells the real match from a stranger who just looks similar.</div>
   </div>
 
-  <section class="frame">
-    <div class="frame-head">
-      <h2 class="frame-label">Look up a record</h2>
-      <span class="frame-tag everyone">open to anyone</span>
-    </div>
-    <p class="hint">A real example is already loaded below. Paste a different hash to look up another record, or a different one from the same chain.</p>
-    <label for="hashInput">Record hash (bytes32)</label>
-    <input type="text" id="hashInput" placeholder="0x..." spellcheck="false" autocomplete="off">
-    <div class="row">
-      <button class="primary" id="lookupBtn">Look up</button>
-      <button class="ghost" id="exampleBtn">Load the real example</button>
-    </div>
-    <div id="status" class="status"></div>
-
-    <div id="ledger" class="ledger">
-      <div class="ledger-head">
-        <div class="vote-dots" id="voteDots" aria-hidden="true"></div>
-        <div class="agreement-text" id="agreementText"></div>
-        <span id="exampleBadge" class="example-badge" style="display:none;">Example record</span>
+  <section class="bezel" id="lookup">
+    <div class="bezel-inner">
+      <div class="card-head">
+        <h2 class="card-title">Look up a record</h2>
+        <span class="badge on">open to anyone</span>
       </div>
-      <div class="ledger-body">
-        <div class="lfield"><div class="k">record hash</div><div class="vwrap"><div class="v" id="r-hash"></div><button class="copy-btn" data-copy="r-hash">Copy</button></div></div>
-        <div class="lfield"><div class="k">transaction</div><div class="vwrap"><div class="v" id="r-tx"></div></div></div>
-        <div class="lfield"><div class="k">submitter</div><div class="vwrap"><div class="v" id="r-submitter"></div><button class="copy-btn" data-copy="r-submitter">Copy</button></div></div>
-        <div class="lfield"><div class="k">timestamp</div><div class="vwrap"><div class="v" id="r-timestamp"></div></div></div>
-        <div class="lfield"><div class="k">metadataURI</div><div class="vwrap"><div class="v" id="r-metadata"></div></div></div>
+      <p class="hint">A real example is already loaded below. Paste a different hash to look up another record, or a different one from the same chain.</p>
+      <label for="hashInput">Record hash (bytes32)</label>
+      <input type="text" id="hashInput" placeholder="0x..." spellcheck="false" autocomplete="off">
+      <div class="row">
+        <button class="primary" id="lookupBtn">Look up</button>
+        <button class="ghost" id="exampleBtn">Load the real example</button>
+      </div>
+      <div id="status" class="status"></div>
+
+      <div id="ledger" class="ledger">
+        <div class="ledger-head">
+          <div class="vote-dots" id="voteDots" aria-hidden="true"></div>
+          <div class="agreement-text" id="agreementText"></div>
+          <span id="exampleBadge" class="example-badge" style="display:none;">Example record</span>
+        </div>
+        <div class="ledger-body">
+          <div class="lfield"><div class="k">record hash</div><div class="vwrap"><div class="v" id="r-hash"></div><button class="copy-btn" data-copy="r-hash">Copy</button></div></div>
+          <div class="lfield"><div class="k">transaction</div><div class="vwrap"><div class="v" id="r-tx"></div></div></div>
+          <div class="lfield"><div class="k">submitter</div><div class="vwrap"><div class="v" id="r-submitter"></div><button class="copy-btn" data-copy="r-submitter">Copy</button></div></div>
+          <div class="lfield"><div class="k">timestamp</div><div class="vwrap"><div class="v" id="r-timestamp"></div></div></div>
+          <div class="lfield"><div class="k">metadataURI</div><div class="vwrap"><div class="v" id="r-metadata"></div></div></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="frame">
-    <div class="frame-head">
-      <h2 class="frame-label">Verify your own record</h2>
-      <span class="frame-tag">only if you ran the pipeline</span>
-    </div>
-    <p class="hint">Skip this unless you have both files below from running <code>python main.py</code> yourself. There's nothing to check here otherwise.</p>
-    <p class="sublead">
-      Upload the source photo and the saved record JSON (<code>output/&lt;tx_hash&gt;.json</code>).
-      This recomputes the hash in your browser, the same way <code>verify_record.py</code> does,
-      then checks it against the live chain. Nothing is uploaded anywhere, the photo and JSON
-      never leave this page.
-    </p>
-    <div class="file-row">
-      <div class="file-field">
-        <label for="photoInput">Source photo</label>
-        <input type="file" id="photoInput" accept="image/*">
+  <section class="bezel" id="verify">
+    <div class="bezel-inner">
+      <div class="card-head">
+        <h2 class="card-title">Verify your own record</h2>
+        <span class="badge">only if you ran the pipeline</span>
       </div>
-      <div class="file-field">
-        <label for="jsonInput">Record JSON</label>
-        <input type="file" id="jsonInput" accept="application/json,.json">
+      <p class="hint">Skip this unless you have both files below from running <code>python main.py</code> yourself. There's nothing to check here otherwise.</p>
+      <p class="sublead">
+        Upload the source photo and the saved record JSON (<code>output/&lt;tx_hash&gt;.json</code>).
+        This recomputes the hash in your browser, the same way <code>verify_record.py</code> does,
+        then checks it against the live chain. Nothing is uploaded anywhere, the photo and JSON
+        never leave this page.
+      </p>
+      <div class="file-row">
+        <div class="file-field">
+          <label for="photoInput">Source photo</label>
+          <input type="file" id="photoInput" accept="image/*">
+        </div>
+        <div class="file-field">
+          <label for="jsonInput">Record JSON</label>
+          <input type="file" id="jsonInput" accept="application/json,.json">
+        </div>
       </div>
+      <button class="primary" id="verifyUploadBtn">Verify</button>
+      <div id="uploadStatus" class="status"></div>
+      <div id="checklist" class="checklist"></div>
     </div>
-    <button class="primary" id="verifyUploadBtn">Verify</button>
-    <div id="uploadStatus" class="status"></div>
-    <div id="checklist" class="checklist"></div>
   </section>
 
   <p class="foot-note">
@@ -517,6 +546,29 @@ verifyBtn.addEventListener("click", async () => {
     verifyBtn.disabled = false;
   }
 });
+
+// --- Fluid island nav: hamburger morph + full-screen glass overlay ---
+const hamburgerBtn = document.getElementById("hamburgerBtn");
+const navOverlay = document.getElementById("navOverlay");
+
+function setNavOpen(open) {
+  navOverlay.classList.toggle("open", open);
+  hamburgerBtn.classList.toggle("open", open);
+  hamburgerBtn.setAttribute("aria-expanded", String(open));
+}
+hamburgerBtn.addEventListener("click", () => setNavOpen(!navOverlay.classList.contains("open")));
+document.querySelectorAll(".overlay-link").forEach((a) => a.addEventListener("click", () => setNavOpen(false)));
+
+// --- Scroll reveal: fade + blur in as each glass card enters the viewport ---
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("in-view");
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll(".bezel").forEach((el) => revealObserver.observe(el));
 </script>
 </body>
 </html>

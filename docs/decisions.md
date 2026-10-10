@@ -516,3 +516,56 @@ edit-mode toggle in a real browser afterward, nothing left overlapping.
 Placed it at `docs/presentation.html`, not the repo root, so it's served
 by GitHub Pages like the proof viewer, a real clickable no-setup link
 instead of a file someone has to clone and open. Linked from the README.
+
+## 2026-10-10 - Replaced the proof-sheet identity with Ethereal Glass, by explicit choice
+
+User installed a third-party skill pack (`Leonxlnx/taste-skill`, added via
+`npx skills add`) and asked to apply `high-end-visual-design` to both the
+proof viewer and the deck. That skill prescribes a specific, different
+aesthetic: OLED black, glowing violet/emerald orbs, heavy glassmorphism,
+double-bezel nested cards, a floating glass pill nav with a hamburger
+morph, and bento-style grids. It's also written for Tailwind/React, this
+project is plain HTML/CSS/JS by design.
+
+Flagged the conflict before touching anything: this skill's own "don't do
+this" list is close to the opposite of what the proof-sheet identity was
+just built around (that identity deliberately avoided glassmorphism and
+near-black-plus-single-accent, both of which this skill calls for
+directly). Applying it literally meant discarding the safelight glow,
+film grain, register-mark frames, and autofocus brackets built and tested
+over the last several commits. Gave the user that tradeoff explicitly
+rather than guessing; they chose the full replacement, not a middle
+ground, so the darkroom identity is gone from both pages now, replaced by
+the one this skill specifies.
+
+Implementation notes:
+- Kept every functional ID, class, and JS handler in the proof viewer
+  (`hashInput`, `lookup()`, `verifyUploadBtn`, the whole verify-your-own-
+  record flow, the example badge) completely untouched, only CSS and
+  decorative markup changed. Re-tested the live lookup, the ledger
+  rendering, and both JS flows afterward, all still work
+  byte-for-byte the same as before
+- The skill's own performance section says never apply `backdrop-blur` to
+  scrolling content, only to fixed/sticky elements, which directly
+  contradicts its vibe section's "heavy backdrop-blur-2xl on cards."
+  Resolved the conflict in the skill's own favor on the stricter rule:
+  blur is used only on the fixed island nav and its full-screen overlay,
+  the scrolling glass cards get the double-bezel look via layered
+  box-shadow and a pseudo-element halo instead, no real blur, no repaint
+  cost on scroll
+- Built the "double-bezel" card as a single element plus a `::before`
+  halo instead of literally nesting two wrapper divs per card, so all 15
+  deck slides and both proof-viewer sections could be reskinned without
+  rewriting their markup structure
+- Added a floating glass island nav with a working hamburger-to-X morph
+  and full-screen staggered-reveal menu to the proof viewer (it didn't
+  have any navigation chrome before, this page only has two sections)
+- The autofocus-bracket hero graphic was replaced with a conceptually
+  identical device in the new vocabulary (glass tiles, one highlighted
+  emerald with a check), so the "many candidates, one verified" point
+  the old hero made still gets made, just through the new component
+  system instead of the old one
+- The separate status artifact page was not touched, it still uses the
+  proof-sheet identity, so it's now visually out of sync with the two
+  pages that were just redone. Not fixed without being asked, since only
+  the proof viewer and deck were in scope this time
