@@ -448,3 +448,29 @@ real or just an example. Fixed with content, not more chrome:
 Verified in a real browser: the invalid-hash error path, the "no record
 found" path, the example badge showing and clearing correctly, and the
 reset-to-example flow all still work exactly as before.
+
+## 2026-10-10 - Gave the proof viewer real visual presence, not just a flat dark panel
+
+The register-mark redesign fixed the generic-SaaS tells but still read as
+plain: solid flat background, no hero visual, nothing to look at before
+reaching the first input box. Added three things, each earning its place
+rather than decorating for its own sake:
+
+- A film-grain texture over the whole page (an SVG feTurbulence noise
+  filter, no image asset, ~5% opacity), since actual photographic proof
+  sheets have grain, a flat vector-smooth dark panel doesn't
+- A soft red glow behind the hero, the same hue as the signal-red accent.
+  It's literally what a safelight does in a darkroom, so the glow is the
+  metaphor rendered in light, not an arbitrary gradient wash
+- A hero graphic: a row of camera-style autofocus brackets (pure CSS
+  corner gradients, no image), one highlighted red with a green checkmark.
+  This is literally what the pipeline does, reverse search returns several
+  candidates, ensemble verification confirms the genuine one, so it earns
+  the hero spot instead of a generic big-number-plus-label treatment
+
+No real face photos anywhere, the brackets are empty on purpose, which
+also sidesteps any consent question about using a depicted face as hero
+art. Mirrored the same grain, glow, and bracket motif onto the status
+artifact so the two keep reading as one site. Checked in a real browser:
+grain and glow don't reduce text contrast, the bracket row wraps cleanly,
+no change to any JS behavior.
