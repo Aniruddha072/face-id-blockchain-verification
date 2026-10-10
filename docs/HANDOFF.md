@@ -91,18 +91,20 @@ else is done.
   historically tuned against LFW by their own authors, so strong LFW
   performance doesn't fully transfer as evidence for the pipeline's
   actual harder real-world photos
+- Full security review: covered the pipeline, both entrypoints, the
+  smart contract, both static pages, and secrets handling. Specifically
+  checked and ruled out XSS in the proof viewer (confirmed untrusted data
+  only ever goes through `.textContent`), an overwrite risk in
+  `storeRecord()`'s permissionless write (not targetable due to SHA-256
+  preimage resistance), and path traversal via CLI arguments (not
+  applicable, this is a local trusted-input CLI tool). Zero findings
+  cleared the confidence bar, nothing filed as an issue. See decisions.md
 
 **Not done:**
 - Demo GIF: ScreenToGif is installed, a test recording was done weeks ago,
   official recording still pending (user wants it done last)
-- Full security review: the user explicitly asked for this as the final
-  step once everything else is done, covering the diff/code surface plus
-  project-specific risk areas (secrets handling, the smart contract, the
-  client-side verify tool, API key exposure). Any real findings get filed
-  as GitHub issues the same way every other bug here has been, then the
-  user gets notified. Not started yet, waiting on the demo GIF first
 
 ## Next concrete step
 
-Demo GIF, then the full security review, in that order, both explicitly
-requested by the user. Final commit and push once both land.
+Demo GIF (the user's own screen recording), then a final commit and push.
+That's the last item on the project.

@@ -347,3 +347,31 @@ README: ArcFace/Facenet/VGG-Face were historically developed and tuned
 against LFW by their original authors, so strong LFW performance is
 partly expected, not fully independent evidence of accuracy on the
 pipeline's actual harder real-world photos.
+
+## 2026-10-10 - Full security review, no findings
+
+Reviewed every file in the project (pipeline, entrypoints, the contract,
+both static pages, secrets handling) for concrete, exploitable
+vulnerabilities, not just style issues. No findings cleared the
+confidence bar. Specifically checked and ruled out:
+
+- XSS in the proof viewer: `FaceRecord.sol`'s `storeRecord()` is
+  permissionless, so `metadataURI` is attacker-writable on-chain data.
+  Traced every place it (or any uploaded-file data) gets rendered;
+  everything untrusted goes through `.textContent`, never `.innerHTML`
+  with unescaped content.
+- Overwrite risk in `storeRecord()`: no "already exists" guard before
+  writing, but overwriting a specific `recordHash` requires reproducing
+  its exact original byte content (SHA-256 preimage resistance), not
+  something targetable in practice.
+- Path handling in `verify_record.py --tx` / `main.py --image`: builds
+  file paths from CLI arguments without sanitizing, which would be path
+  traversal in a hosted context. Not applicable here, this is a local CLI
+  tool and CLI flags are a trusted input source.
+- Secrets: no hardcoded keys anywhere in tracked files, `.env` correctly
+  gitignored, loaded only via `os.getenv()`.
+
+No GitHub issues filed, nothing to log as a bug. Reviewed directly
+instead of through a sub-task-delegation workflow, full context on this
+codebase was already loaded, so that added more value than re-discovering
+it from scratch would have.
