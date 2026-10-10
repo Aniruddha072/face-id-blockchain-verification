@@ -135,6 +135,19 @@ project is considered complete; the demo GIF was deliberately skipped
   these two pages; flagged, not fixed, since it wasn't in scope. See
   decisions.md for the conflict this skill's own rules created and how
   it was resolved
+- Final security audit, stricter than the first one: found and fixed a
+  real secret-leak path. Both the SerpApi key and the Alchemy RPC key
+  could print in plaintext whenever their network call failed (confirmed
+  by actually reproducing the failures, not just reading code). Fixed
+  with one `config.redact()` helper applied everywhere an exception
+  becomes a printed message, across `search.py`, `anchor.py`, `proof.py`,
+  and `deploy.py`, plus a `SearchError` class so search failures are
+  actually caught instead of crashing raw. Also fixed: no Subresource
+  Integrity on the proof viewer's ethers.js script, and the client-side
+  verify checklist built its rows with `innerHTML` instead of
+  `textContent` (traced and confirmed not currently exploitable, hardened
+  anyway). A second, stricter pass after the fixes found nothing further.
+  Issues #8, #9, #10. See decisions.md for how each was verified
 
 ## Next concrete step
 

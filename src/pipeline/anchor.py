@@ -67,7 +67,7 @@ def anchor_record(record: dict, metadata_uri: str = "") -> str:
     try:
         receipt = with_retry(_call)
     except Exception as exc:
-        raise ChainError(f"failed to anchor record on-chain: {exc}") from exc
+        raise ChainError(f"failed to anchor record on-chain: {config.redact(str(exc))}") from exc
 
     return receipt.transactionHash.hex()
 

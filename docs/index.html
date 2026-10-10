@@ -283,7 +283,7 @@ input[type=file]{
   </p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
 <script>
 const CONTRACT_ADDRESS = "0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99";
 const RPC_URL = "https://polygon-amoy.drpc.org";
@@ -436,9 +436,23 @@ function renderChecklist(rows) {
   rows.forEach((row) => {
     const div = document.createElement("div");
     div.className = "check-row";
-    div.innerHTML =
-      '<div class="icon ' + (row.pass ? "pass" : "fail") + '">' + (row.pass ? "OK" : "X") + "</div>" +
-      '<div class="text">' + row.text + (row.detail ? '<span class="detail">' + row.detail + "</span>" : "") + "</div>";
+
+    const icon = document.createElement("div");
+    icon.className = "icon " + (row.pass ? "pass" : "fail");
+    icon.textContent = row.pass ? "OK" : "X";
+    div.appendChild(icon);
+
+    const text = document.createElement("div");
+    text.className = "text";
+    text.appendChild(document.createTextNode(row.text));
+    if (row.detail) {
+      const detail = document.createElement("span");
+      detail.className = "detail";
+      detail.textContent = row.detail;
+      text.appendChild(detail);
+    }
+    div.appendChild(text);
+
     el.appendChild(div);
   });
   el.classList.add("visible");

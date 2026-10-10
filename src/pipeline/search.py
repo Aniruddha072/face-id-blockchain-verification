@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import requests
 
 from . import config
-from .exceptions import NoCandidatesFoundError
+from .exceptions import NoCandidatesFoundError, SearchError
 from .retry import with_retry
 
 SOCIAL_DOMAINS = (
@@ -56,7 +56,10 @@ def _upload_image(image_path: str) -> str:
         response.raise_for_status()
         return response.json()
 
-    return with_retry(_call)["image_id"]
+    try:
+        return with_retry(_call)["image_id"]
+    except Exception as exc:
+        raise SearchError(f"failed to upload image to SerpApi: {config.redact(str(exc))}") from exc
 
 
 def reverse_search(image_path: str) -> list[Candidate]:
@@ -82,7 +85,10 @@ def reverse_search(image_path: str) -> list[Candidate]:
         response.raise_for_status()
         return response.json()
 
-    data = with_retry(_call)
+    try:
+        data = with_retry(_call)
+    except Exception as exc:
+        raise SearchError(f"reverse-image search request failed: {config.redact(str(exc))}") from exc
 
     candidates = []
     for match in data.get("visual_matches", []):

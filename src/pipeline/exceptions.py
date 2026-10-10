@@ -10,6 +10,10 @@ class NoCandidatesFoundError(PipelineError):
     """Raised when reverse search returns no social-media candidates."""
 
 
+class SearchError(PipelineError):
+    """Raised when the reverse-image search request itself fails."""
+
+
 class NoVerifiedMatchError(PipelineError):
     """Raised when no candidate passes face verification against the source."""
 

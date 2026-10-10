@@ -22,7 +22,7 @@ def read_record(record_hash: bytes) -> dict:
     try:
         result = with_retry(_call)
     except Exception as exc:
-        raise ChainError(f"failed to read record from chain: {exc}") from exc
+        raise ChainError(f"failed to read record from chain: {config.redact(str(exc))}") from exc
 
     return {
         "recordHash": result[0].hex(),

@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
+from pipeline import config  # noqa: E402
 from pipeline.anchor import record_hash  # noqa: E402
 from pipeline.exceptions import PipelineError  # noqa: E402
 from pipeline.proof import read_record  # noqa: E402
@@ -66,7 +67,7 @@ def main() -> None:
     except PipelineError as exc:
         print(f"verification failed: {exc}", file=sys.stderr)
         if exc.__cause__:
-            print(f"caused by: {exc.__cause__}", file=sys.stderr)
+            print(f"caused by: {config.redact(str(exc.__cause__))}", file=sys.stderr)
         sys.exit(1)
 
     sys.exit(0 if ok else 1)

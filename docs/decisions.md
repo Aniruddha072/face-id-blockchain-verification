@@ -609,3 +609,72 @@ the verify-section screenshot had the exact same scrollbar artifact, only
 the record one had actually been retaken. Fixed both the same way. The
 two deck slides don't scroll (the fixed-stage deck sets `overflow:hidden`
 on `html`/`body`), so they were never affected.
+
+## 2026-10-10 - Final security audit: found and fixed a real secret-leak path
+
+Asked for a stricter final pass, not a repeat of the earlier review. This
+time reproduced failures instead of just reading code, and it paid off:
+confirmed a real, exploitable leak, not a theoretical one.
+
+**What was found.** Both the SerpApi key and the Alchemy RPC key (the
+Alchemy key lives inside `ALCHEMY_AMOY_RPC_URL` itself) can print in
+plaintext whenever their respective network call fails. `requests` and
+`web3.py`'s `HTTPProvider` both build their exception messages from the
+full request URL, confirmed by deliberately triggering HTTP errors and
+connection failures against real endpoints. `reverse_search()` didn't
+even wrap its exceptions in a `PipelineError`, so a search failure would
+print a raw unhandled traceback, key included. `anchor_record()` and
+`read_record()` did wrap failures in `ChainError`, but the wrapper just
+embedded `str(exc)` as-is, which already contained the leaking URL, so
+wrapping didn't actually redact anything. `deploy.py` had no exception
+handling at all. Given this project's own habit of pasting real run
+output into GitHub issues when something breaks, a transient rate limit
+or timeout could have put a live credential into this public repo's
+issue tracker. Filed as issue #8.
+
+Also filed, lower severity: no Subresource Integrity on the ethers.js CDN
+script in the proof viewer (#9), and the client-side verify checklist
+built its rows with `innerHTML` instead of `textContent` (#10), traced
+and confirmed not currently exploitable (every value that reaches it is
+either a hardcoded string or a hex digest, never attacker-influenced),
+but worth hardening against a future edit introducing one.
+
+**Fixes.** Added one `config.redact()` helper that strips every loaded
+secret out of a string, used everywhere a message gets built from an
+exception, in `search.py`, `anchor.py`, `proof.py`, and `deploy.py`.
+Added a `SearchError` exception class so search failures are actually
+caught by `main.py`'s handler instead of crashing raw. Gave `deploy.py`'s
+`main()` the same try/except pattern `main.py` and `verify_record.py`
+already had. Caught one more leak spot while fixing this: `main.py` and
+`verify_record.py` both print `exc.__cause__` separately on failure,
+that's the original, unredacted exception, so redacting only the wrapper
+message would have missed it; redacted that line too. Added SRI plus
+`crossorigin` to the ethers.js script tag, hash computed directly from
+the exact file being served. Rewrote the checklist renderer to build DOM
+with `createElement`/`textContent` instead of string-concatenated
+`innerHTML`.
+
+**Verification, not just code review.** Confirmed the redaction against
+the exact failure strings reproduced earlier. Monkeypatched
+`reverse_search()`'s own real code path to hit a real 403 response and
+confirmed the raised `SearchError` contained `[REDACTED]`, not the key.
+Confirmed the SRI hash is correct by loading the real page and watching
+the live on-chain lookup still succeed. Confirmed the checklist fix by
+feeding it `<img onerror=...>` and `<script>` payloads directly and
+checking the actual DOM node types, zero real elements created, same
+check initially gave a false pass because the browser tab hadn't been
+reloaded after the file changed, caught and redone properly. Ran
+`verify_record.py` against the real deployed contract afterward end to
+end, confirmed the happy path through the modified `read_record()` still
+matches on-chain.
+
+**Second, stricter pass.** Reviewed `verify.py` and `detect.py` fresh,
+re-examined the contract for front-running under an adversarial lens
+(self-correcting within one block, no economic incentive, ruled out),
+checked whether the deck's localStorage-based inline editing could
+interact with the proof viewer since both share one GitHub Pages origin
+(confirmed the proof viewer never touches localStorage at all, no
+interaction possible), and grepped the entire codebase for every
+remaining place an exception gets turned into a printed string to
+confirm nothing was missed. Found nothing new beyond the three already
+filed and fixed.
