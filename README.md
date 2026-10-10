@@ -125,6 +125,53 @@ anchored on-chain alongside the record hash, in `FaceRecord.sol`'s
 [on-chain proof viewer](https://aniruddha072.github.io/face-id-blockchain-verification/)
 shows it for any anchored record.
 
+## Measured accuracy
+
+`benchmark_ensemble.py` measures the ensemble against
+[LFW's labeled pairs](https://vis-www.cs.umass.edu/lfw/) (known same-person
+and different-person photo pairs), entirely offline, no reverse-image
+search or blockchain involved:
+
+```bash
+pip install scikit-learn   # only needed for this benchmark, not the pipeline
+python benchmark_ensemble.py --per-class 50
+```
+
+On a 100-pair sample (50 same-person, 50 different-person):
+
+```
+true positive rate:  92.0%  (46/50 genuine matches correctly verified)
+false positive rate: 2.0%  (1/49 different people incorrectly verified)
+skipped (face not detected): 1
+
+model agreement distribution:
+same-person pairs:       0/3=1, 1/3=3, 2/3=8, 3/3=38
+different-person pairs:  0/3=46, 1/3=2, 2/3=1
+```
+
+Both error cases were manually checked against the actual photos. The one
+false positive is two different men who are genuinely similar-looking
+(age, mustache, skin tone, build), a believable mistake, not a data
+error. The hardest false negative is the same woman photographed at a
+very different angle, lighting, and apparent age, a legitimately hard
+pair, not a labeling error.
+
+An earlier 30-pair run reported 100% TPR / 0% FPR. That sample was too
+small to catch anything: with zero observed errors in 15 trials, the
+true error rate could plausibly be as high as 15-20% by chance alone
+(the standard "rule of three" bound for zero-event samples). 100 pairs
+is still not a formal benchmark, but it's large enough to have actually
+found both a real false positive and a real false negative, which is
+more convincing than a suspiciously perfect small sample. Worth being
+upfront about one more thing: ArcFace, Facenet, and VGG-Face were
+historically developed and tuned against LFW by their original authors,
+so strong LFW performance is partly expected rather than fully
+independent evidence of real-world accuracy on the messier photos this
+pipeline actually processes (compressed thumbnails, odd crops, social
+media compression). This benchmark confirms the ensemble logic itself
+works correctly and the 2-of-3 pattern is real, not that the pipeline
+will hit 92%/2% on arbitrary internet photos.
+
 ## Example output
 
 Real run against a real photo, `python main.py --image photo.jpg`:

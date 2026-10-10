@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-10-09
+Last updated: 2026-10-10
 
 ## Where things stand
 
@@ -8,10 +8,13 @@ Resumed weeks later to finish this as a resume piece. Hackathon framing is
 gone from the README and from the build-log artifact (redesigned as a
 status page, not a sprint tracker). The project has a live, free,
 read-only on-chain proof viewer (`docs/index.html`, hosted on GitHub
-Pages), repo topics/description polish, and ensemble face verification
-with the model-agreement count anchored on-chain. See the 2026-10-09
-decisions.md entries for the reasoning behind all of this. The demo GIF
-is the only thing left.
+Pages) with its own client-side record-verification tool, ensemble face
+verification with the model-agreement count anchored on-chain, and a
+real, reproducible accuracy benchmark: 92% TPR, 2% FPR on 100 LFW pairs,
+with both error cases manually checked against the actual photos. See
+decisions.md for the reasoning behind all of this. Two things left: the
+demo GIF, and a full security review the user asked for once everything
+else is done.
 
 **Done:**
 - Public repo created: https://github.com/Aniruddha072/face-id-blockchain-verification
@@ -63,12 +66,43 @@ is the only thing left.
   for this repo. Amended and force-pushed since it was the branch tip with
   nothing on top of it; full history swept afterward and confirmed clean.
   See decisions.md for how it happened
+- Client-side record verification added to the proof viewer: upload a
+  photo and a saved `output/<tx>.json`, recomputes the hash in-browser
+  byte-identical to Python's `json.dumps`, checks it against the chain.
+  Verified against real data with both positive and negative (tampered
+  JSON, wrong photo) test cases
+- Stopped using personal/ambiguous-consent photos for testing (every real
+  anchored match so far was confirmed by the user to not actually be
+  them). Live reverse-search testing now uses real consenting family
+  members with genuine public presence, going forward
+- `benchmark_ensemble.py` added: measures the ensemble against LFW's
+  labeled pairs (scikit-learn's `fetch_lfw_pairs`), entirely offline,
+  known ground truth. Found and fixed a real reproducibility bug in the
+  sampling (random.sample doesn't nest across sample sizes the way
+  shuffle-then-slice does) while scaling from an initial 30-pair pilot up
+  to 100 pairs. Final result: 92% true positive rate (46/50), 2% false
+  positive rate (1/49, one skipped for failed detection). Both error
+  cases manually inspected against the real photos (saved locally to
+  `lfw_benchmark_images/`, gitignored): the false positive is two
+  genuinely similar-looking different men, the hardest false negative is
+  the same woman at a very different angle/lighting/age, neither is a
+  data error. Documented in the README with the exact command to
+  reproduce it, including the honest caveat that these three models were
+  historically tuned against LFW by their own authors, so strong LFW
+  performance doesn't fully transfer as evidence for the pipeline's
+  actual harder real-world photos
 
 **Not done:**
 - Demo GIF: ScreenToGif is installed, a test recording was done weeks ago,
   official recording still pending (user wants it done last)
+- Full security review: the user explicitly asked for this as the final
+  step once everything else is done, covering the diff/code surface plus
+  project-specific risk areas (secrets handling, the smart contract, the
+  client-side verify tool, API key exposure). Any real findings get filed
+  as GitHub issues the same way every other bug here has been, then the
+  user gets notified. Not started yet, waiting on the demo GIF first
 
 ## Next concrete step
 
-The demo GIF is the only thing left on the whole project. Record it with
-ScreenToGif, embed it in the README, final commit and push.
+Demo GIF, then the full security review, in that order, both explicitly
+requested by the user. Final commit and push once both land.

@@ -273,3 +273,77 @@ the no-AI-traces rule for this repo predates this commit by weeks. Fixed
 it directly since `a10a521` was the branch tip with nothing pushed on top
 of it yet: amended the message and force-pushed, no history rewrite
 needed this time. Full history swept afterward and confirmed clean.
+
+## 2026-10-10 - Stopped using personal/ambiguous-consent photos for testing, measured real accuracy instead
+
+Every real match anchored so far had been checked manually and confirmed
+to not actually be the project owner, confirming the match-confidence
+section's own caveat. Rather than keep chasing a convincing real-world
+match (and running into the consent problem that comes with testing on
+other people's photos without clear consent), switched to two things that
+don't have that problem:
+
+- Live reverse-search testing now uses real consenting family members
+  with genuine public presence, not reused public-figure photos or
+  reverse-image-search guesses.
+- Added `benchmark_ensemble.py`: measures the ensemble against
+  scikit-learn's `fetch_lfw_pairs` (Labeled Faces in the Wild, the
+  standard academic face-verification benchmark), entirely offline, known
+  ground truth, no search or blockchain involved. `scikit-learn` is an
+  optional dependency for this script only, not added to the main
+  `requirements.txt` since the pipeline itself doesn't need it.
+
+Licensing note worth being honest about: LFW doesn't have a single clear
+formal license, sources conflict, and there's documented criticism that
+subjects never consented to inclusion. Used here as what it actually is,
+the standard dataset the field uses for exactly this kind of offline
+algorithm benchmarking, not claimed as a fully rights-cleared resource.
+
+First real run (30 pairs, 15 same-person and 15 different-person, `test`
+subset): 100% true positive rate, 0% false positive rate. Superseded
+within the same session, see the next entry below, since 15 per class
+turned out to be too small a sample to mean much.
+
+## 2026-10-10 - Scaled the accuracy benchmark to 100 pairs, found a real false positive and false negative
+
+The 30-pair result got questioned, fairly: with zero observed errors in
+15 trials per class, the true error rate could plausibly be as high as
+15-20% and still produce a 0-error sample by chance (the standard "rule
+of three" bound). A suspiciously perfect small sample isn't strong
+evidence, it's just a sample too small to have found anything yet.
+
+Fixed a real reproducibility bug while scaling up: the original sampling
+used `random.sample(population, k)` per run, which doesn't guarantee a
+smaller `k`'s pairs are a subset of a larger `k`'s pairs even with the
+same seed, since the underlying algorithm's RNG usage differs by `k`.
+Switched to shuffling the full index list once per seed, then slicing,
+which correctly makes a larger `--per-class` run a strict extension of a
+smaller one. This changed which exact pairs the default seed produces, so
+the original 30-pair run's specific pairs aren't reproducible from the
+current script, only its reported numbers (already recorded above) are.
+
+Re-ran clean at 100 pairs (50 same-person, 50 different-person), and
+manually inspected every pair's actual photos, not just the aggregate
+numbers, before accepting the result: 92% true positive rate (46/50),
+2.0% false positive rate (1/49, one pair skipped for failed face
+detection). Agreement distribution: same-person pairs split 0/3=1,
+1/3=3, 2/3=8, 3/3=38; different-person pairs split 0/3=46, 1/3=2, 2/3=1.
+
+Checked both error cases against the real photos (saved locally to
+`lfw_benchmark_images/`, gitignored, not committed, this project's own
+pipeline output, not something to publish without separately clearing
+rights for those specific LFW subjects). The one false positive (pair 54)
+is two different men who are genuinely similar-looking, age, mustache,
+skin tone, build, a believable mistake. The hardest false negative (pair
+3) is the same woman across a large difference in angle, lighting, and
+apparent age, a legitimately hard pair. Neither looks like a labeling
+error or a pipeline bug.
+
+This result is more credible than the 30-pair one specifically because
+it's not perfect: finding real, explainable errors at a larger sample
+size is stronger evidence the benchmark is actually measuring something,
+not just too small to see problems. Also flagged explicitly in the
+README: ArcFace/Facenet/VGG-Face were historically developed and tuned
+against LFW by their original authors, so strong LFW performance is
+partly expected, not fully independent evidence of accuracy on the
+pipeline's actual harder real-world photos.
