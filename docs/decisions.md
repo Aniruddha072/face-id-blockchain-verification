@@ -375,3 +375,51 @@ No GitHub issues filed, nothing to log as a bug. Reviewed directly
 instead of through a sub-task-delegation workflow, full context on this
 codebase was already loaded, so that added more value than re-discovering
 it from scratch would have.
+
+## 2026-10-10 - Skipped the demo GIF, called the project done
+
+The live proof viewer link already does what a GIF exists to fake: lets
+anyone see and use the real thing with zero setup. A GIF only adds value
+for someone skimming the repo who won't click through, which is a nice
+extra for a portfolio piece, not a missing feature. Decided it's not
+worth blocking on; the project is otherwise complete end to end.
+
+## 2026-10-10 - Redesigned the proof viewer and status page away from generic dark-SaaS defaults
+
+Both `docs/index.html` and the status artifact had drifted into the
+common generated-page tells: an uppercase tracked-out eyebrow label,
+meta strings joined with middle dots, mono type used for small field
+labels instead of just the data itself, and a near-black background with
+a single bright accent that could belong to any dashboard. None of that
+was wrong, just generic.
+
+Replaced it with a visual identity actually grounded in the subject: a
+photographic proof sheet. "Proof" already means two things here (a
+contact print made to check before publishing, and a cryptographic
+verification), so the metaphor isn't decorative. Concrete devices:
+
+- Register-mark corner ticks on every content frame instead of
+  rounded-card-plus-drop-shadow, like print registration marks
+- A single film-sprocket perforation strip at the very top of the page,
+  the one deliberately bold flourish, not repeated per section
+- A warm near-black "darkroom" background instead of a blue-black one,
+  with two accent colors that carry real meaning: safelight red for
+  primary actions and in-progress state, a developer-tray green reserved
+  only for "verified/passed" states, never used decoratively
+- Frame numbers (01 to 05) only on the pipeline stages, since that's the
+  one place content is genuinely sequential; the lookup and verify
+  panels get plain titles, no fake numbering
+- Space Grotesk for headings, IBM Plex Sans for body and field labels,
+  IBM Plex Mono reserved for actual data (hashes, addresses, timestamps)
+  rather than for UI chrome
+
+Tested the rebuilt proof viewer in a real browser (served locally, not
+just opened as a file) before committing: the live on-chain lookup
+still runs automatically on load, the vote-dot agreement indicator
+renders, copy buttons work, and the verify-your-own-record flow still
+recomputes and checks a real record. No JS logic changed, only markup
+and styling, so the existing read/verify behavior carries over exactly.
+The status artifact was rebuilt with the same tokens so the two pages
+keep reading as one site, and it also picked up the LFW accuracy numbers
+and the security review result, neither of which existed the last time
+it was redesigned.

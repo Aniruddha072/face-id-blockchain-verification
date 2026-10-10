@@ -11,10 +11,13 @@ read-only on-chain proof viewer (`docs/index.html`, hosted on GitHub
 Pages) with its own client-side record-verification tool, ensemble face
 verification with the model-agreement count anchored on-chain, and a
 real, reproducible accuracy benchmark: 92% TPR, 2% FPR on 100 LFW pairs,
-with both error cases manually checked against the actual photos. See
-decisions.md for the reasoning behind all of this. Two things left: the
-demo GIF, and a full security review the user asked for once everything
-else is done.
+with both error cases manually checked against the actual photos. The
+full codebase has been reviewed for security issues with nothing filed,
+and both the proof viewer and the status artifact were redesigned around
+a photographic-proof-sheet visual identity instead of generic dark-SaaS
+defaults. See decisions.md for the reasoning behind all of this. The
+project is considered complete; the demo GIF was deliberately skipped
+(see decisions.md).
 
 **Done:**
 - Public repo created: https://github.com/Aniruddha072/face-id-blockchain-verification
@@ -99,12 +102,21 @@ else is done.
   preimage resistance), and path traversal via CLI arguments (not
   applicable, this is a local trusted-input CLI tool). Zero findings
   cleared the confidence bar, nothing filed as an issue. See decisions.md
-
-**Not done:**
-- Demo GIF: ScreenToGif is installed, a test recording was done weeks ago,
-  official recording still pending (user wants it done last)
+- Proof viewer and status artifact redesigned around a photographic-proof-
+  sheet visual identity: register-mark corner ticks on content frames, a
+  film-sprocket perforation strip as the one deliberate flourish, a warm
+  darkroom palette where the two accent colors carry real meaning (signal
+  red for actions, developer green reserved for verified/passed states
+  only), frame numbers only on the pipeline's actual sequence, and mono
+  type reserved for real data instead of UI labels. Tested live in a
+  browser, not just opened as a file: on-chain lookup, vote-dot agreement
+  indicator, copy buttons, and the verify-your-own-record flow all still
+  work, no JS logic was touched. The status artifact also picked up the
+  LFW accuracy numbers and the security review result. See decisions.md
+- Demo GIF skipped by decision, not an oversight: the live proof viewer
+  link already lets anyone see and use the real thing with zero setup,
+  which is what a GIF exists to fake. See decisions.md
 
 ## Next concrete step
 
-Demo GIF (the user's own screen recording), then a final commit and push.
-That's the last item on the project.
+None. The project is complete.
