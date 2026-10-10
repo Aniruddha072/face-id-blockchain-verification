@@ -10,16 +10,17 @@ MODEL_NAME = "ArcFace"
 
 @dataclass
 class FaceEncoding:
-    embedding: list[float]
     bbox: dict[str, int]
     confidence: float
 
 
 def detect_and_encode(image_path: str) -> FaceEncoding:
-    """Detect the most prominent face in an image and return its embedding.
+    """Detect the most prominent face in an image.
 
     Picks the largest detected face by bounding-box area (ties broken by
-    confidence) when more than one face is present.
+    confidence) when more than one face is present. verify_candidates()
+    re-runs detection itself per candidate, so only the bbox and confidence
+    are needed here, not the embedding DeepFace.represent() also computes.
     """
     try:
         results = DeepFace.represent(
@@ -37,11 +38,7 @@ def detect_and_encode(image_path: str) -> FaceEncoding:
     region = best["facial_area"]
     bbox = {"x": region["x"], "y": region["y"], "w": region["w"], "h": region["h"]}
 
-    return FaceEncoding(
-        embedding=best["embedding"],
-        bbox=bbox,
-        confidence=best["face_confidence"],
-    )
+    return FaceEncoding(bbox=bbox, confidence=best["face_confidence"])
 
 
 def _face_rank(entry: dict) -> tuple[int, float]:

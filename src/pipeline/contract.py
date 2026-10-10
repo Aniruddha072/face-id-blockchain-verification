@@ -7,8 +7,6 @@ from web3.middleware import ExtraDataToPOAMiddleware
 CONTRACT_PATH = Path(__file__).resolve().parents[2] / "contracts" / "FaceRecord.sol"
 SOLC_VERSION = "0.8.20"
 
-_cached: tuple[list, str] | None = None
-
 
 def get_web3(rpc_url: str) -> Web3:
     """Web3 instance for Polygon Amoy, with POA block header support.
@@ -31,13 +29,9 @@ def _ensure_solc() -> None:
 def compile_contract() -> tuple[list, str]:
     """Compile contracts/FaceRecord.sol, return (abi, bytecode).
 
-    Cached after the first call so deploy.py, anchor.py, and proof.py all
-    compile once per process, not once per call.
+    deploy.py, anchor.py, and proof.py each call this exactly once per
+    process, so there's nothing to cache across calls.
     """
-    global _cached
-    if _cached is not None:
-        return _cached
-
     _ensure_solc()
     source = CONTRACT_PATH.read_text()
     compiled = solcx.compile_source(
@@ -46,5 +40,4 @@ def compile_contract() -> tuple[list, str]:
         solc_version=SOLC_VERSION,
     )
     _, contract_interface = next(iter(compiled.items()))
-    _cached = (contract_interface["abi"], contract_interface["bin"])
-    return _cached
+    return contract_interface["abi"], contract_interface["bin"]

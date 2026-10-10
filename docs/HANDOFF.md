@@ -148,6 +148,17 @@ project is considered complete; the demo GIF was deliberately skipped
   `textContent` (traced and confirmed not currently exploitable, hardened
   anyway). A second, stricter pass after the fixes found nothing further.
   Issues #8, #9, #10. See decisions.md for how each was verified
+- Over-engineering audit (ponytail-audit), every finding fact-checked
+  before being applied: deleted an orphaned status page (`build-log.html`,
+  unlinked from anywhere live), removed the deck's hidden inline-editing
+  feature (a real, if invisible, feature loss on the live page, flagged
+  explicitly), removed a contract-compile cache that never actually
+  cached anything in any real run, deduplicated the ensemble-voting logic
+  between `verify.py` and `benchmark_ensemble.py` into one shared
+  function, shrunk a manual temp-file pattern to one stdlib call, and
+  dropped an unused `embedding` field nothing ever read. Re-verified the
+  whole set together afterward against the real deployed contract and a
+  live browser check of the deck. See decisions.md
 
 ## Next concrete step
 

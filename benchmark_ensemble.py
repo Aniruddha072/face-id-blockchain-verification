@@ -14,33 +14,12 @@ sys.path.insert(0, "src")
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-from pipeline.detect import DETECTOR_BACKEND  # noqa: E402
-from pipeline.verify import AGREEMENT_NEEDED, ENSEMBLE_MODELS, MODEL_NAME  # noqa: E402
+from pipeline.verify import AGREEMENT_NEEDED, ENSEMBLE_MODELS, ensemble_vote  # noqa: E402
 
 
 def to_image(arr):
     """LFW arrays are float32 in [0, 1]; DeepFace expects uint8 in [0, 255]."""
     return (arr * 255).astype("uint8")
-
-
-def ensemble_verify(img1, img2):
-    """Same logic as verify_candidates(): majority vote across ENSEMBLE_MODELS."""
-    agreed = 0
-    primary_distance = None
-    for model_name in ENSEMBLE_MODELS:
-        from deepface import DeepFace
-
-        result = DeepFace.verify(
-            img1_path=img1,
-            img2_path=img2,
-            model_name=model_name,
-            detector_backend=DETECTOR_BACKEND,
-        )
-        if model_name == MODEL_NAME:
-            primary_distance = result["distance"]
-        if result["verified"]:
-            agreed += 1
-    return agreed, len(ENSEMBLE_MODELS), primary_distance
 
 
 def main() -> None:
@@ -77,7 +56,7 @@ def main() -> None:
         is_same = data.target_names[data.target[i]] == "Same person"
 
         try:
-            agreed, total, primary_distance = ensemble_verify(img1, img2)
+            agreed, total, primary_distance = ensemble_vote(img1, img2)
         except Exception as exc:
             skipped += 1
             print(f"[{n}/{len(sample_idx)}] skipped (detection failed): {exc}")

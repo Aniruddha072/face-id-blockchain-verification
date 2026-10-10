@@ -678,3 +678,55 @@ interaction possible), and grepped the entire codebase for every
 remaining place an exception gets turned into a printed string to
 confirm nothing was missed. Found nothing new beyond the three already
 filed and fixed.
+
+## 2026-10-10 - Over-engineering audit, fact-checked every finding before touching anything
+
+Ran ponytail-audit over the whole repo, then re-verified each finding
+independently before applying it, not just trusting the first pass.
+
+- **Deleted `docs/build-log.html`** (211 lines). Grepped the whole repo
+  plus the GitHub repo's own homepage/description; it was never linked
+  from the README, the proof viewer, the deck, or the repo settings, an
+  orphaned status page from a design iteration before even the darkroom
+  redesign (still had the old teal/amber tokens). Unreachable by any live
+  link, safe to remove outright.
+- **Removed the deck's inline content-editing** (contentEditable,
+  localStorage autosave, the hidden edit-mode toggle revealed by hovering
+  the top-left corner or pressing E). This one actually changed the live
+  page, not just internal code, flagged clearly before committing since
+  it's a real feature loss, not cleanup. It came from the frontend-slides
+  skill's own default template, never something requested, and every
+  actual change made to this deck all session was made by editing the
+  HTML source directly, confirming nobody needed to edit a finished,
+  fact-anchored presentation in their own browser. Verified by hovering
+  the exact hotzone after removal, confirmed gone, and that keyboard/
+  touch/wheel navigation still works normally.
+- **Removed `compile_contract()`'s module-level cache** in `contract.py`.
+  Fact-checked by grepping every call site of `anchor_record()`,
+  `read_record()`, and `deploy()`, each is called exactly once by a
+  separate CLI entrypoint, so the cache never once saved a second compile
+  in any real run. Re-ran `verify_record.py` against the real deployed
+  contract afterward to confirm removing it didn't break anything.
+- **Extracted `ensemble_vote()`** as a shared function in `verify.py`,
+  removing a duplicated model-voting loop that `benchmark_ensemble.py`
+  had reimplemented on its own. Also noticed while doing this:
+  `benchmark_ensemble.py`'s local copy imported DeepFace lazily inside
+  the loop to keep `--help` fast, but the file already eagerly imports
+  `pipeline.verify` at the top, which itself imports DeepFace at module
+  level, so that lazy import was never actually doing anything. Gone now
+  along with the duplicate.
+- **Shrunk `_download_to_temp()`** in `verify.py` from a manual
+  `tempfile.mkstemp` + `os.fdopen` pattern to `tempfile.NamedTemporaryFile`,
+  same behavior in fewer lines. Checked this doesn't hit a Windows
+  file-locking issue, since the write handle closes before the path is
+  returned and used elsewhere.
+- **Removed the unused `embedding` field** from `FaceEncoding` in
+  `detect.py`. Grepped the whole codebase for any read of `.embedding`
+  outside its own definition, none exists; `verify_candidates()` re-reads
+  the image path directly and lets DeepFace recompute internally instead
+  of reusing the stored embedding.
+
+Verified the whole set together afterward: all pipeline modules import
+cleanly, all three CLI entrypoints compile, `verify_record.py` against
+the real contract still returns MATCH, and the deck still navigates
+correctly with zero console errors after the edit-mode removal.

@@ -29,15 +29,37 @@ def _download_to_temp(url: str) -> str:
         return response.content
 
     content = with_retry(_call)
-    fd, path = tempfile.mkstemp(suffix=".jpg")
-    with os.fdopen(fd, "wb") as f:
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
         f.write(content)
-    return path
+        return f.name
 
 
 TOP_N_MATCHES = 3
 ENSEMBLE_MODELS = (MODEL_NAME, "Facenet512", "VGG-Face")
 AGREEMENT_NEEDED = 2  # of len(ENSEMBLE_MODELS), a majority
+
+
+def ensemble_vote(img1_path: str, img2_path: str) -> tuple[int, int, float]:
+    """Run every ENSEMBLE_MODELS model against the two images, majority vote.
+
+    Shared by verify_candidates() and benchmark_ensemble.py, so the
+    benchmark measures the exact same voting logic the real pipeline uses.
+    Returns (models_agreed, models_total, primary_model_distance).
+    """
+    agreed = 0
+    primary_distance = None
+    for model_name in ENSEMBLE_MODELS:
+        result = DeepFace.verify(
+            img1_path=img1_path,
+            img2_path=img2_path,
+            model_name=model_name,
+            detector_backend=DETECTOR_BACKEND,
+        )
+        if model_name == MODEL_NAME:
+            primary_distance = result["distance"]
+        if result["verified"]:
+            agreed += 1
+    return agreed, len(ENSEMBLE_MODELS), primary_distance
 
 
 def verify_candidates(image_path: str, candidates: list[Candidate]) -> list[Match]:
@@ -60,19 +82,7 @@ def verify_candidates(image_path: str, candidates: list[Candidate]) -> list[Matc
             continue
 
         try:
-            agreed = 0
-            primary_distance = None
-            for model_name in ENSEMBLE_MODELS:
-                result = DeepFace.verify(
-                    img1_path=image_path,
-                    img2_path=thumb_path,
-                    model_name=model_name,
-                    detector_backend=DETECTOR_BACKEND,
-                )
-                if model_name == MODEL_NAME:
-                    primary_distance = result["distance"]
-                if result["verified"]:
-                    agreed += 1
+            agreed, total, primary_distance = ensemble_vote(image_path, thumb_path)
         except Exception:
             continue
         finally:
@@ -86,7 +96,7 @@ def verify_candidates(image_path: str, candidates: list[Candidate]) -> list[Matc
                 similarity_score=primary_distance,
                 model=MODEL_NAME,
                 models_agreed=agreed,
-                models_total=len(ENSEMBLE_MODELS),
+                models_total=total,
             )
         )
 

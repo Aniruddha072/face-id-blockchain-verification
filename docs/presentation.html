@@ -180,18 +180,6 @@ table.stack td.pick{color:var(--emerald);}
 .deck-controls button:hover{color:var(--ink);}
 .deck-controls button:active{transform:scale(0.92);}
 .deck-controls .count{font-family:var(--font-mono); font-size:14px; color:var(--ink-dim); min-width:56px; text-align:center;}
-
-/* ===========================================
-   INLINE EDITING (lightweight, included by default)
-   =========================================== */
-.edit-hotzone{position:fixed; top:0; left:0; width:80px; height:80px; z-index:10000; cursor:pointer;}
-.edit-toggle{position:fixed; top:16px; left:16px; z-index:10001; opacity:0; pointer-events:none; transition:opacity 0.3s ease;
-  background:var(--glass-bg-strong); border:1px solid var(--glass-border); color:var(--ink-muted); font-size:18px; width:40px; height:40px; border-radius:50%; cursor:pointer; backdrop-filter:blur(16px);}
-.edit-toggle.show,.edit-toggle.active{opacity:1; pointer-events:auto;}
-.edit-toggle.active{color:var(--emerald); border-color:rgba(45,212,167,0.4);}
-body.edit-mode [data-editable]{outline:1px dashed var(--emerald); outline-offset:3px; cursor:text;}
-.save-hint{position:fixed; bottom:16px; left:16px; z-index:10001; font-family:var(--font-mono); font-size:13px; color:var(--ink-dim); background:var(--surface-raised); border:1px solid var(--glass-border); border-radius:8px; padding:6px 10px; opacity:0; transition:opacity 0.3s;}
-body.edit-mode .save-hint{opacity:1;}
 </style>
 </head>
 <body>
@@ -202,9 +190,9 @@ body.edit-mode .save-hint{opacity:1;}
     <section class="slide active visible title-slide">
       <div class="orb orb-violet"></div>
       <div class="orb orb-emerald"></div>
-      <div class="eyebrow-pill reveal" data-editable><span class="dot"></span>Live on Polygon Amoy, verified contract</div>
-      <h1 class="reveal" data-editable>Face ID + <span class="grad">Blockchain Verification</span></h1>
-      <p class="sub reveal" data-editable>A reverse-image face match, confirmed by three independent verification models, anchored on-chain as a record anyone can check themselves.</p>
+      <div class="eyebrow-pill reveal"><span class="dot"></span>Live on Polygon Amoy, verified contract</div>
+      <h1 class="reveal">Face ID + <span class="grad">Blockchain Verification</span></h1>
+      <p class="sub reveal">A reverse-image face match, confirmed by three independent verification models, anchored on-chain as a record anyone can check themselves.</p>
       <div class="tiles reveal">
         <div class="tile-outer"><div class="tile-inner"></div></div>
         <div class="tile-outer"><div class="tile-inner"></div></div>
@@ -213,7 +201,7 @@ body.edit-mode .save-hint{opacity:1;}
         <div class="tile-outer"><div class="tile-inner"></div></div>
       </div>
       <div class="page-chrome">
-        <span data-editable>aniruddha072.github.io/face-id-blockchain-verification</span>
+        <span>aniruddha072.github.io/face-id-blockchain-verification</span>
         <span class="pg">01 / 15</span>
       </div>
     </section>
@@ -223,8 +211,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-violet"></div>
       <div class="kicker-row"><span class="kicker">The <b>problem</b></span><span class="meta">Why one match isn't enough</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Reverse-image search can find a stranger who just looks like you.</h2>
-        <p class="content-lede reveal" data-editable>Face search doesn't always find the actual subject, especially when a photo isn't heavily reposted or tagged. A single embedding model can confidently match the wrong person.</p>
+        <h2 class="content-title reveal">Reverse-image search can find a stranger who just looks like you.</h2>
+        <p class="content-lede reveal">Face search doesn't always find the actual subject, especially when a photo isn't heavily reposted or tagged. A single embedding model can confidently match the wrong person.</p>
         <div class="frame reveal" style="padding:36px 44px;">
           <div class="kicker" style="color:var(--ink-dim); margin-bottom:14px;">Confirmed by a real test run</div>
           <p style="font-size:24px; line-height:1.6; color:var(--ink-muted); max-width:1300px;">A single model, ArcFace, passed a stranger's photo as a match under its own distance threshold. Nothing else caught it, because nothing else was checking. One confident model is not the same as one correct model.</p>
@@ -238,8 +226,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-emerald"></div>
       <div class="kicker-row"><span class="kicker">The <b>pipeline</b></span><span class="meta">Five stages, end to end</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Detect, search, verify, anchor, prove.</h2>
-        <p class="content-lede reveal" data-editable>Each stage is a separate, independently-tested Python module. Nothing is skipped and nothing is hardcoded.</p>
+        <h2 class="content-title reveal">Detect, search, verify, anchor, prove.</h2>
+        <p class="content-lede reveal">Each stage is a separate, independently-tested Python module. Nothing is skipped and nothing is hardcoded.</p>
         <div class="pipeline reveal">
           <div class="pstage c-exposed"><div class="pnum">01</div><div class="ptitle">Detect &amp; encode</div><div class="pdesc">RetinaFace finds the face, ArcFace turns it into an embedding.</div></div>
           <div class="pstage c-processing"><div class="pnum">02</div><div class="ptitle">Reverse search</div><div class="pdesc">Google Lens, via SerpApi, finds where that face appears publicly.</div></div>
@@ -256,8 +244,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-violet"></div>
       <div class="kicker-row"><span class="kicker">Stage <b>01</b></span><span class="meta">Detect &amp; encode</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>RetinaFace finds the face. ArcFace turns it into numbers.</h2>
-        <p class="content-lede reveal" data-editable>The detector returns a bounding box and a confidence score. The encoder turns the cropped face into a fixed-length embedding, the vector every later stage compares against.</p>
+        <h2 class="content-title reveal">RetinaFace finds the face. ArcFace turns it into numbers.</h2>
+        <p class="content-lede reveal">The detector returns a bounding box and a confidence score. The encoder turns the cropped face into a fixed-length embedding, the vector every later stage compares against.</p>
         <div class="frame reveal" style="padding:36px 44px;">
           <div class="kicker" style="color:var(--ink-dim); margin-bottom:18px;">A real detection result</div>
           <div style="font-family:var(--font-mono); font-size:22px; color:var(--ink); line-height:2;">
@@ -274,8 +262,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-emerald"></div>
       <div class="kicker-row"><span class="kicker">Stage <b>02</b></span><span class="meta">Reverse search</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>A genuine reverse-image search, not a hardcoded result.</h2>
-        <p class="content-lede reveal" data-editable>SerpApi's Google Lens engine runs the actual search against the live web, filtered down to social-media domains. Whatever comes back is real, not seeded.</p>
+        <h2 class="content-title reveal">A genuine reverse-image search, not a hardcoded result.</h2>
+        <p class="content-lede reveal">SerpApi's Google Lens engine runs the actual search against the live web, filtered down to social-media domains. Whatever comes back is real, not seeded.</p>
         <div class="stat-row reveal">
           <div class="stat"><div class="n">21</div><div class="l">social-media candidates found in one real run</div></div>
           <div class="stat"><div class="n">3</div><div class="l">platforms represented: YouTube, Facebook, Instagram</div></div>
@@ -290,8 +278,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-violet"></div>
       <div class="kicker-row"><span class="kicker">Stage <b>03</b></span><span class="meta">Ensemble verify</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Three models vote. Two of three have to agree.</h2>
-        <p class="content-lede reveal" data-editable>Every candidate is checked against ArcFace, Facenet512, and VGG-Face independently. A candidate only counts as genuinely verified if a majority agree, not just one.</p>
+        <h2 class="content-title reveal">Three models vote. Two of three have to agree.</h2>
+        <p class="content-lede reveal">Every candidate is checked against ArcFace, Facenet512, and VGG-Face independently. A candidate only counts as genuinely verified if a majority agree, not just one.</p>
         <div class="frame reveal" style="padding:36px 44px; display:flex; align-items:center; gap:40px;">
           <div class="vote-dots"><div class="vote-dot on"></div><div class="vote-dot on"></div><div class="vote-dot"></div></div>
           <div style="font-size:22px; line-height:1.6; color:var(--ink-muted);">
@@ -307,8 +295,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-emerald"></div>
       <div class="kicker-row"><span class="kicker">Stage <b>04</b></span><span class="meta">Anchor on-chain</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>A minimal Solidity contract, nothing more than it needs.</h2>
-        <p class="content-lede reveal" data-editable>storeRecord() writes the hash, the agreement count, and a timestamp. getRecord() lets anyone, including this deck's reader, read it back without a wallet.</p>
+        <h2 class="content-title reveal">A minimal Solidity contract, nothing more than it needs.</h2>
+        <p class="content-lede reveal">storeRecord() writes the hash, the agreement count, and a timestamp. getRecord() lets anyone, including this deck's reader, read it back without a wallet.</p>
         <div class="frame reveal">
           <table class="stack">
             <thead><tr><th>Field</th><th>Type</th><th>What it holds</th></tr></thead>
@@ -330,8 +318,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-violet"></div>
       <div class="kicker-row"><span class="kicker">Stage <b>05</b></span><span class="meta">Prove it, from either side</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Two ways to prove a record is real, not just claimed.</h2>
-        <p class="content-lede reveal" data-editable>verify_record.py re-reads the chain from a transaction hash. The live proof viewer does the same thing from a browser, plus a client-side check against your own output file.</p>
+        <h2 class="content-title reveal">Two ways to prove a record is real, not just claimed.</h2>
+        <p class="content-lede reveal">verify_record.py re-reads the chain from a transaction hash. The live proof viewer does the same thing from a browser, plus a client-side check against your own output file.</p>
         <div class="reveal" style="display:flex; gap:30px;">
           <div class="frame" style="flex:1; padding:32px 34px;">
             <div class="kicker" style="color:var(--ink-dim); margin-bottom:12px;">From the command line</div>
@@ -351,7 +339,7 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-emerald"></div>
       <div class="kicker-row"><span class="kicker">Proof</span><span class="meta">The most recent real anchor</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Not a mockup. This record is live on PolygonScan right now.</h2>
+        <h2 class="content-title reveal">Not a mockup. This record is live on PolygonScan right now.</h2>
         <div class="frame reveal">
           <div class="ledger-head">
             <span class="tag">2 of 3 models agreed</span>
@@ -374,7 +362,7 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-violet"></div>
       <div class="kicker-row"><span class="kicker"><b>Measured</b> accuracy</span><span class="meta">100 LFW pairs, offline, known ground truth</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>92% true positive, 2% false positive. Measured, not assumed.</h2>
+        <h2 class="content-title reveal">92% true positive, 2% false positive. Measured, not assumed.</h2>
         <div class="stat-row reveal" style="margin-bottom:28px;">
           <div class="stat"><div class="n good">92.0%</div><div class="l">true positive rate, 46 of 50 genuine matches correctly verified</div></div>
           <div class="stat"><div class="n bad">2.0%</div><div class="l">false positive rate, 1 of 49 different people incorrectly verified</div></div>
@@ -392,8 +380,8 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-emerald"></div>
       <div class="kicker-row"><span class="kicker"><b>Security</b> review</span><span class="meta">Full codebase, not just the diff</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Reviewed end to end. Nothing cleared the bar to file.</h2>
-        <p class="content-lede reveal" data-editable>The pipeline, both entrypoints, the smart contract, both static pages, and secrets handling were all checked for concrete, exploitable issues, not just style.</p>
+        <h2 class="content-title reveal">Reviewed end to end. Nothing cleared the bar to file.</h2>
+        <p class="content-lede reveal">The pipeline, both entrypoints, the smart contract, both static pages, and secrets handling were all checked for concrete, exploitable issues, not just style.</p>
         <ul class="item-list frame reveal">
           <li><span class="m pass">OK</span>XSS in the proof viewer: untrusted on-chain data only ever rendered through <span style="font-family:var(--font-mono); margin-left:4px;">.textContent</span>, never raw HTML</li>
           <li><span class="m pass">OK</span>Overwrite risk in storeRecord(): not targetable, requires reproducing a record's exact bytes under SHA-256 preimage resistance</li>
@@ -409,7 +397,7 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-violet"></div>
       <div class="kicker-row"><span class="kicker">Tech <b>stack</b></span><span class="meta">Every pick, and why</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Free, swappable, and independently checkable at every layer.</h2>
+        <h2 class="content-title reveal">Free, swappable, and independently checkable at every layer.</h2>
         <div class="frame reveal">
           <table class="stack">
             <thead><tr><th>Layer</th><th>Pick</th><th>Why</th></tr></thead>
@@ -432,7 +420,7 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-emerald"></div>
       <div class="kicker-row"><span class="kicker">Known <b>limitations</b></span><span class="meta">Said plainly, not buried</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>What this project doesn't claim to do.</h2>
+        <h2 class="content-title reveal">What this project doesn't claim to do.</h2>
         <ul class="item-list frame reveal">
           <li><span class="m">&gt;</span>Search coverage is limited to what Google has indexed, it won't find recent or private posts</li>
           <li><span class="m">&gt;</span>A tamper-evident hash proves the record existed at a point in time, not that the matched content itself is authentic</li>
@@ -449,7 +437,7 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-violet"></div>
       <div class="kicker-row"><span class="kicker">Consent <b>&amp; ethics</b></span><span class="meta">A boundary, not a footnote</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Built for consenting subjects. Nothing else.</h2>
+        <h2 class="content-title reveal">Built for consenting subjects. Nothing else.</h2>
         <div class="frame reveal" style="padding:40px 48px;">
           <p style="font-size:22px; line-height:1.65; color:var(--ink-muted);">This pipeline is run only against consenting subjects with a real, findable public presence. It is not intended, and should not be used, for employment, credit, insurance, tenant-screening, or any other decision about a person without their knowledge and consent. The accuracy benchmark earlier in this deck used LFW, a public academic dataset with known ground truth, specifically to avoid testing on anyone without their consent.</p>
         </div>
@@ -463,7 +451,7 @@ body.edit-mode .save-hint{opacity:1;}
       <div class="orb orb-emerald"></div>
       <div class="kicker-row"><span class="kicker">Status</span><span class="meta">End to end, verified</span></div>
       <div class="content-body">
-        <h2 class="content-title reveal" data-editable>Every stage in this deck has run against <span class="grad">a real anchored record.</span></h2>
+        <h2 class="content-title reveal">Every stage in this deck has run against <span class="grad">a real anchored record.</span></h2>
         <div class="status-tag reveal" style="display:inline-flex; margin-bottom:34px;">Complete, security-reviewed, nothing open</div>
         <div class="links reveal">
           <a href="https://aniruddha072.github.io/face-id-blockchain-verification/" target="_blank" rel="noopener">&gt; Open the live proof viewer</a>
@@ -482,11 +470,6 @@ body.edit-mode .save-hint{opacity:1;}
   <span class="count" id="slideCount">1 / 15</span>
   <button id="nextBtn" aria-label="Next slide">&gt;</button>
 </div>
-
-<!-- Inline editing affordance -->
-<div class="edit-hotzone" id="editHotzone"></div>
-<button class="edit-toggle" id="editToggle" title="Edit mode (E)">&#9998;</button>
-<div class="save-hint">Edit mode: click text to change it. Autosaves to this browser. Press E to exit.</div>
 
 <script>
 /* ===========================================
@@ -520,10 +503,8 @@ class SlidePresentation {
   }
   setupKeyboardNav(){
     document.addEventListener('keydown', (e) => {
-      if (document.body.classList.contains('edit-mode') && e.target.getAttribute('contenteditable')) return;
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); this.showSlide(this.currentSlide + 1); }
       if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); this.showSlide(this.currentSlide - 1); }
-      if (e.key.toLowerCase() === 'e' && !e.target.getAttribute('contenteditable')) { toggleEditMode(); }
     });
   }
   setupTouchNav(){
@@ -553,50 +534,6 @@ class SlidePresentation {
     this.countEl.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
   }
 }
-/* ===========================================
-   INLINE EDITING
-   Click any marked element to edit it. Autosaves to localStorage
-   (per-browser only) so edits survive a reload on this device.
-   =========================================== */
-const STORAGE_KEY = 'faceid-deck-content-v1';
-const stageEl = document.getElementById('deckStage');
-const editToggle = document.getElementById('editToggle');
-const hotzone = document.getElementById('editHotzone');
-let hideTimeout = null;
-let saveTimeout = null;
-
-function restoreSavedContent(){
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) stageEl.innerHTML = saved;
-  } catch (e) { /* private browsing or storage disabled: just skip restoring */ }
-}
-function saveContent(){
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    try { localStorage.setItem(STORAGE_KEY, stageEl.innerHTML); } catch (e) { /* storage unavailable, nothing to do */ }
-  }, 500);
-}
-function setEditableState(on){
-  stageEl.querySelectorAll('[data-editable]').forEach((el) => { el.setAttribute('contenteditable', on ? 'true' : 'false'); });
-}
-function toggleEditMode(){
-  const on = !document.body.classList.contains('edit-mode');
-  document.body.classList.toggle('edit-mode', on);
-  editToggle.classList.toggle('active', on);
-  setEditableState(on);
-}
-editToggle.addEventListener('click', toggleEditMode);
-hotzone.addEventListener('click', toggleEditMode);
-hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); editToggle.classList.add('show'); });
-hotzone.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!document.body.classList.contains('edit-mode')) editToggle.classList.remove('show'); }, 400); });
-editToggle.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); });
-editToggle.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!document.body.classList.contains('edit-mode')) editToggle.classList.remove('show'); }, 400); });
-stageEl.addEventListener('input', saveContent);
-
-/* Restore any saved edits BEFORE the controller queries .slide nodes,
-   otherwise it would hold references to nodes this replaces. */
-restoreSavedContent();
 const deck = new SlidePresentation();
 </script>
 </body>
