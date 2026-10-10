@@ -116,6 +116,14 @@ project is considered complete; the demo GIF was deliberately skipped
 - Demo GIF skipped by decision, not an oversight: the live proof viewer
   link already lets anyone see and use the real thing with zero setup,
   which is what a GIF exists to fake. See decisions.md
+- 15-slide walkthrough deck added at `docs/presentation.html`, served live
+  by GitHub Pages and linked from the README. Built with the frontend-slides
+  skill, using a custom style that extends the proof viewer's and status
+  artifact's existing visual system instead of one of the skill's stock
+  presets, so all three live pages read as one brand. Covers the pipeline,
+  the real anchored record, measured accuracy, the security review, and
+  the consent/ethics stance, all real project data. See decisions.md for
+  a layout bug caught and fixed before shipping
 
 ## Next concrete step
 

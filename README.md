@@ -7,6 +7,10 @@ verifiable record.
 **[Try the live on-chain proof viewer](https://aniruddha072.github.io/face-id-blockchain-verification/)**,
 reads directly from the deployed, source-verified contract, no setup needed.
 
+**[Walkthrough deck](https://aniruddha072.github.io/face-id-blockchain-verification/presentation.html)**,
+a 15-slide tour of the pipeline, the real anchored record, and the measured
+accuracy, for anyone who'd rather read a summary than the full README.
+
 ## Overview
 
 The pipeline runs in five stages. It detects and encodes a face from an

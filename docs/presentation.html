@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face ID + Blockchain Verification</title>
+<meta name="description" content="A walkthrough deck: a reverse-image face match, confirmed by three independent verification models, anchored on-chain as a tamper-evident record.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   THEME TOKENS
+   Same system as the live proof viewer and status page,
+   so the deck and the two live pages read as one brand.
+   =========================================== */
+:root{
+  --bg:#15120E;
+  --panel:#1E1811;
+  --panel-raised:#241D15;
+  --line:#3C3225;
+  --line-soft:#2C2419;
+  --ink:#F3EDE3;
+  --ink-muted:#ADA08B;
+  --ink-dim:#6E6350;
+  --signal:#E6402A;
+  --develop:#7FB069;
+  --fail:#B2362A;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-sans:'IBM Plex Sans', sans-serif;
+  --font-mono:'IBM Plex Mono', monospace;
+  --pad:140px;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+  --stage-bg:#0c0a07;
+  --slide-bg:var(--bg);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE (viewport-base.css, included in full)
+   =========================================== */
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg);}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg);}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--slide-bg);}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg);}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1;}
+img,video,canvas,svg{max-width:100%;max-height:100%;}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000;}
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff;}
+  .deck-viewport{position:static;overflow:visible;background:#fff;}
+  .deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none;}
+  .slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;width:1920px;height:1080px;break-after:page;page-break-after:always;}
+  .slide:last-child{break-after:auto;page-break-after:auto;}
+  .deck-controls{display:none!important;}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.2s!important;}}
+
+/* ===========================================
+   SLIDE CONTENT SYSTEM
+   =========================================== */
+.slide{font-family:var(--font-sans); color:var(--ink);}
+
+.grain{position:absolute; inset:0; opacity:0.05; mix-blend-mode:overlay; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.filmstrip{position:absolute; top:0; left:0; width:100%; height:20px; background-color:var(--panel);
+  background-image:radial-gradient(circle at 20px 10px, var(--bg) 5.5px, transparent 6px);
+  background-repeat:repeat-x; background-size:40px 20px; border-bottom:1px solid var(--line); z-index:2;}
+
+.kicker-row{position:absolute; left:var(--pad); right:var(--pad); top:90px; display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line); padding-bottom:18px;}
+.kicker{font-family:var(--font-mono); font-size:19px; color:var(--ink-dim);}
+.kicker b{color:var(--signal); font-weight:600;}
+.meta{font-family:var(--font-mono); font-size:19px; color:var(--ink-dim);}
+
+/* Flowing wrapper: title/lede/content stack in normal document flow,
+   so a title wrapping to 2 lines can never overlap what comes after it. */
+.content-body{position:absolute; left:var(--pad); top:168px; width:1640px;}
+.content-title{font-family:var(--font-display); font-weight:700; font-size:66px; line-height:1.14; letter-spacing:-0.015em; color:var(--ink); margin-bottom:26px;}
+.content-lede{width:1300px; font-size:25px; line-height:1.6; color:var(--ink-muted); margin-bottom:44px;}
+
+.page-chrome{position:absolute; left:var(--pad); bottom:70px; right:var(--pad); display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:18px; color:var(--ink-dim);}
+.page-chrome .pg{color:var(--signal);}
+
+/* register-mark frame, same device as the live site */
+.frame{position:relative; background:var(--panel); border:1px solid var(--line); border-radius:3px;}
+.frame::before,.frame::after{content:""; position:absolute; width:16px; height:16px; pointer-events:none;}
+.frame::before{top:-1px; left:-1px; border-top:2px solid var(--signal); border-left:2px solid var(--signal);}
+.frame::after{bottom:-1px; right:-1px; border-bottom:2px solid var(--signal); border-right:2px solid var(--signal);}
+
+/* pipeline grid */
+.pipeline{display:flex; width:100%; border:1px solid var(--line); border-radius:3px; overflow:hidden;}
+.pstage{flex:1; padding:34px 28px; border-right:1px solid var(--line); background:var(--panel); position:relative;}
+.pstage:last-child{border-right:none;}
+.pstage.active-stage{background:var(--panel-raised);}
+.pstage .pnum{font-family:var(--font-mono); font-size:20px; color:var(--ink-dim); margin-bottom:16px;}
+.pstage.active-stage .pnum{color:var(--signal);}
+.pstage .ptitle{font-family:var(--font-display); font-weight:600; font-size:25px; margin-bottom:10px; line-height:1.2;}
+.pstage .pdesc{font-size:17.5px; color:var(--ink-muted); line-height:1.5;}
+.pstage.c-exposed{border-top:3px solid var(--signal);}
+.pstage.c-processing{border-top:3px solid var(--line);}
+.pstage.c-fixed{border-top:3px solid var(--develop);}
+
+/* stat row */
+.stat-row{display:flex; gap:20px;}
+.stat{flex:1; background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:26px 28px;}
+.stat .n{font-family:var(--font-mono); font-size:44px; font-weight:600; color:var(--signal); font-variant-numeric:tabular-nums;}
+.stat .n.good{color:var(--develop);}
+.stat .n.bad{color:var(--fail);}
+.stat .l{font-size:18px; color:var(--ink-dim); margin-top:8px;}
+
+/* ledger */
+.ledger-head{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 30px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+.ledger-head .tag{font-family:var(--font-mono); font-size:17px; color:var(--bg); background:var(--signal); padding:6px 14px; border-radius:4px; font-weight:600;}
+.vote-dots{display:flex; gap:9px;}
+.vote-dot{width:18px; height:18px; border-radius:50%; background:var(--line);}
+.vote-dot.on{background:var(--signal);}
+.ledger-body{padding:6px 30px;}
+.lfield{display:flex; gap:24px; padding:18px 0; border-bottom:1px solid var(--line-soft); font-size:22px;}
+.lfield:last-child{border-bottom:none;}
+.lfield .k{color:var(--ink-dim); font-family:var(--font-sans); font-size:19px; font-weight:500; flex:0 0 220px; padding-top:3px;}
+.lfield .v{font-family:var(--font-mono); font-size:21px; word-break:break-all; color:var(--ink);}
+.runner-up{padding:16px 30px; border-top:1px dashed var(--line); font-size:19px; color:var(--ink-muted); display:flex; gap:16px;}
+.runner-up .dist{font-family:var(--font-mono); color:var(--ink-dim); flex-shrink:0;}
+
+/* table */
+table.stack{width:100%; border-collapse:collapse; font-size:19px;}
+table.stack th{text-align:left; font-family:var(--font-mono); font-weight:500; font-size:16px; color:var(--ink-dim); padding:16px 24px; background:var(--panel-raised); border-bottom:1px solid var(--line);}
+table.stack td{padding:18px 24px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-muted);}
+table.stack tr:last-child td{border-bottom:none;}
+table.stack td.layer{color:var(--ink); font-weight:600; white-space:nowrap;}
+table.stack td.pick{color:var(--signal);}
+
+/* limitation / checklist list */
+.item-list{list-style:none;}
+.item-list li{display:flex; gap:16px; padding:17px 30px; border-bottom:1px solid var(--line-soft); font-size:21px; color:var(--ink-muted);}
+.item-list li:last-child{border-bottom:none;}
+.item-list .m{color:var(--ink-dim); font-family:var(--font-mono); flex-shrink:0;}
+.item-list .m.pass{color:var(--develop);}
+
+/* viewfinder brackets */
+.vf{width:96px; height:96px; flex-shrink:0;
+  background:
+    linear-gradient(var(--line),var(--line)) top left/26px 4px no-repeat,
+    linear-gradient(var(--line),var(--line)) top left/4px 26px no-repeat,
+    linear-gradient(var(--line),var(--line)) top right/26px 4px no-repeat,
+    linear-gradient(var(--line),var(--line)) top right/4px 26px no-repeat,
+    linear-gradient(var(--line),var(--line)) bottom left/26px 4px no-repeat,
+    linear-gradient(var(--line),var(--line)) bottom left/4px 26px no-repeat,
+    linear-gradient(var(--line),var(--line)) bottom right/26px 4px no-repeat,
+    linear-gradient(var(--line),var(--line)) bottom right/4px 26px no-repeat;
+}
+.vf.match{
+  background:
+    linear-gradient(var(--signal),var(--signal)) top left/26px 4px no-repeat,
+    linear-gradient(var(--signal),var(--signal)) top left/4px 26px no-repeat,
+    linear-gradient(var(--signal),var(--signal)) top right/26px 4px no-repeat,
+    linear-gradient(var(--signal),var(--signal)) top right/4px 26px no-repeat,
+    linear-gradient(var(--signal),var(--signal)) bottom left/26px 4px no-repeat,
+    linear-gradient(var(--signal),var(--signal)) bottom left/4px 26px no-repeat,
+    linear-gradient(var(--signal),var(--signal)) bottom right/26px 4px no-repeat,
+    linear-gradient(var(--signal),var(--signal)) bottom right/4px 26px no-repeat;
+  display:flex; align-items:center; justify-content:center;
+}
+.vf.match svg{width:40px; height:40px;}
+
+/* title slide only */
+.title-slide .slate{position:absolute; left:var(--pad); top:150px; font-family:var(--font-mono); font-size:24px; color:var(--ink-muted); border-left:5px solid var(--signal); padding:4px 0 4px 18px;}
+.title-slide .glow{position:absolute; top:-260px; left:420px; width:1400px; height:900px; background:radial-gradient(circle, rgba(230,64,42,0.24), rgba(230,64,42,0) 68%); filter:blur(10px); pointer-events:none;}
+.title-slide h1{position:absolute; left:132px; top:240px; width:1600px; font-family:var(--font-display); font-weight:700; font-size:114px; line-height:1.06; letter-spacing:-0.02em; color:var(--ink);}
+.title-slide .sub{position:absolute; left:var(--pad); top:560px; width:1100px; font-size:28px; line-height:1.6; color:var(--ink-muted);}
+.title-slide .viewfinders{position:absolute; left:var(--pad); top:748px; display:flex; gap:28px; align-items:flex-end;}
+
+/* closing slide */
+.closing-slide .status-tag{display:inline-flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size:22px; color:var(--develop); border:1px solid var(--develop); border-radius:99px; padding:10px 22px;}
+.closing-slide .links a{display:block; font-family:var(--font-mono); font-size:24px; color:var(--signal); text-decoration:none; margin-top:18px;}
+.closing-slide .links a:hover{text-decoration:underline;}
+
+/* ===========================================
+   ENTRANCE ANIMATION
+   One orchestrated staggered reveal per slide, nothing scattered.
+   =========================================== */
+.reveal{opacity:0; transform:translateY(22px); transition:opacity 0.55s var(--ease), transform 0.55s var(--ease);}
+.slide.visible .reveal{opacity:1; transform:translateY(0);}
+.reveal:nth-child(1){transition-delay:0.05s;}
+.reveal:nth-child(2){transition-delay:0.12s;}
+.reveal:nth-child(3){transition-delay:0.19s;}
+.reveal:nth-child(4){transition-delay:0.26s;}
+.reveal:nth-child(5){transition-delay:0.33s;}
+.reveal:nth-child(6){transition-delay:0.40s;}
+
+/* ===========================================
+   DECK CHROME: progress + nav (outside the slide design, per viewport-base.css rule 6)
+   =========================================== */
+.deck-controls{display:flex; align-items:center; gap:14px; background:rgba(30,24,17,0.9); border:1px solid var(--line); border-radius:99px; padding:10px 18px; backdrop-filter:blur(6px);}
+.deck-controls button{background:none; border:none; color:var(--ink-muted); font-family:var(--font-mono); font-size:18px; cursor:pointer; padding:4px 8px;}
+.deck-controls button:hover{color:var(--ink);}
+.deck-controls .count{font-family:var(--font-mono); font-size:15px; color:var(--ink-dim); min-width:56px; text-align:center;}
+
+/* ===========================================
+   INLINE EDITING (lightweight, included by default)
+   =========================================== */
+.edit-hotzone{position:fixed; top:0; left:0; width:80px; height:80px; z-index:10000; cursor:pointer;}
+.edit-toggle{position:fixed; top:16px; left:16px; z-index:10001; opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+  background:var(--panel); border:1px solid var(--line); color:var(--ink-muted); font-size:20px; width:40px; height:40px; border-radius:50%; cursor:pointer;}
+.edit-toggle.show,.edit-toggle.active{opacity:1; pointer-events:auto;}
+.edit-toggle.active{color:var(--signal); border-color:var(--signal);}
+body.edit-mode [data-editable]{outline:1px dashed var(--signal); outline-offset:3px; cursor:text;}
+.save-hint{position:fixed; bottom:16px; left:16px; z-index:10001; font-family:var(--font-mono); font-size:13px; color:var(--ink-dim); background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 10px; opacity:0; transition:opacity 0.3s;}
+body.edit-mode .save-hint{opacity:1;}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <main class="deck-stage" id="deckStage">
+
+    <!-- ============ SLIDE 1: TITLE ============ -->
+    <section class="slide active visible title-slide">
+      <div class="grain"></div>
+      <div class="glow"></div>
+      <div class="filmstrip"></div>
+      <div class="slate reveal" data-editable>Polygon Amoy testnet, verified contract</div>
+      <h1 class="reveal" data-editable>Face ID + Blockchain Verification</h1>
+      <p class="sub reveal" data-editable>A reverse-image face match, confirmed by three independent verification models, anchored on-chain as a record anyone can check themselves.</p>
+      <div class="viewfinders reveal">
+        <div class="vf"></div>
+        <div class="vf"></div>
+        <div class="vf match"><svg viewBox="0 0 24 24" fill="none" stroke="#7FB069" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4 10-10"/></svg></div>
+        <div class="vf"></div>
+        <div class="vf"></div>
+      </div>
+      <div class="page-chrome">
+        <span data-editable>aniruddha072.github.io/face-id-blockchain-verification</span>
+        <span class="pg">01 / 15</span>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 2: THE PROBLEM ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">The <b>problem</b></span><span class="meta">Why one match isn't enough</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Reverse-image search can find a stranger who just looks like you.</h2>
+        <p class="content-lede reveal" data-editable>Face search doesn't always find the actual subject, especially when a photo isn't heavily reposted or tagged. A single embedding model can confidently match the wrong person.</p>
+        <div class="frame reveal" style="padding:36px 44px;">
+          <div class="kicker" style="color:var(--ink-dim); margin-bottom:14px;">Confirmed by a real test run</div>
+          <p style="font-size:26px; line-height:1.6; color:var(--ink-muted); max-width:1300px;">A single model, ArcFace, passed a stranger's photo as a match under its own distance threshold. Nothing else caught it, because nothing else was checking. One confident model is not the same as one correct model.</p>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">02 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 3: PIPELINE OVERVIEW ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">The <b>pipeline</b></span><span class="meta">Five stages, end to end</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Detect, search, verify, anchor, prove.</h2>
+        <p class="content-lede reveal" data-editable>Each stage is a separate, independently-tested Python module. Nothing is skipped and nothing is hardcoded.</p>
+        <div class="pipeline reveal">
+          <div class="pstage c-exposed"><div class="pnum">01</div><div class="ptitle">Detect &amp; encode</div><div class="pdesc">RetinaFace finds the face, ArcFace turns it into an embedding.</div></div>
+          <div class="pstage c-processing"><div class="pnum">02</div><div class="ptitle">Reverse search</div><div class="pdesc">Google Lens, via SerpApi, finds where that face appears publicly.</div></div>
+          <div class="pstage c-processing"><div class="pnum">03</div><div class="ptitle">Ensemble verify</div><div class="pdesc">Three models vote on each candidate. Majority required to pass.</div></div>
+          <div class="pstage c-fixed"><div class="pnum">04</div><div class="ptitle">Anchor on-chain</div><div class="pdesc">Hash and agreement count written to a Solidity contract.</div></div>
+          <div class="pstage c-fixed"><div class="pnum">05</div><div class="ptitle">Prove it</div><div class="pdesc">Read the chain back. Confirm nothing was altered.</div></div>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">03 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 4: STAGE 01 DETAIL ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Stage <b>01</b></span><span class="meta">Detect &amp; encode</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>RetinaFace finds the face. ArcFace turns it into numbers.</h2>
+        <p class="content-lede reveal" data-editable>The detector returns a bounding box and a confidence score. The encoder turns the cropped face into a fixed-length embedding, the vector every later stage compares against.</p>
+        <div class="frame reveal" style="padding:36px 44px;">
+          <div class="kicker" style="color:var(--ink-dim); margin-bottom:18px;">A real detection result</div>
+          <div style="font-family:var(--font-mono); font-size:24px; color:var(--ink); line-height:2;">
+            detected face: confidence=<span style="color:var(--develop);">1.000</span><br>
+            bbox={'x': 728, 'y': 292, 'w': 398, 'h': 476}
+          </div>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">04 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 5: STAGE 02 DETAIL ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Stage <b>02</b></span><span class="meta">Reverse search</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>A genuine reverse-image search, not a hardcoded result.</h2>
+        <p class="content-lede reveal" data-editable>SerpApi's Google Lens engine runs the actual search against the live web, filtered down to social-media domains. Whatever comes back is real, not seeded.</p>
+        <div class="stat-row reveal">
+          <div class="stat"><div class="n">21</div><div class="l">social-media candidates found in one real run</div></div>
+          <div class="stat"><div class="n">3</div><div class="l">platforms represented: YouTube, Facebook, Instagram</div></div>
+          <div class="stat"><div class="n">0</div><div class="l">hardcoded or seeded results</div></div>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">05 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 6: STAGE 03 DETAIL (ENSEMBLE) ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Stage <b>03</b></span><span class="meta">Ensemble verify</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Three models vote. Two of three have to agree.</h2>
+        <p class="content-lede reveal" data-editable>Every candidate is checked against ArcFace, Facenet512, and VGG-Face independently. A candidate only counts as genuinely verified if a majority agree, not just one.</p>
+        <div class="frame reveal" style="padding:36px 44px; display:flex; align-items:center; gap:40px;">
+          <div class="vote-dots"><div class="vote-dot on"></div><div class="vote-dot on"></div><div class="vote-dot"></div></div>
+          <div style="font-size:24px; line-height:1.6; color:var(--ink-muted);">
+            Ranking still uses ArcFace's distance as the primary signal, but the agreement count travels alongside it, anchored on-chain in <span style="font-family:var(--font-mono); color:var(--ink);">modelsAgreed</span> / <span style="font-family:var(--font-mono); color:var(--ink);">modelsTotal</span>, not just kept in a local log file.
+          </div>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">06 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 7: STAGE 04 DETAIL (ANCHOR) ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Stage <b>04</b></span><span class="meta">Anchor on-chain</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>A minimal Solidity contract, nothing more than it needs.</h2>
+        <p class="content-lede reveal" data-editable>storeRecord() writes the hash, the agreement count, and a timestamp. getRecord() lets anyone, including this deck's reader, read it back without a wallet.</p>
+        <div class="frame reveal">
+          <table class="stack">
+            <thead><tr><th>Field</th><th>Type</th><th>What it holds</th></tr></thead>
+            <tbody>
+              <tr><td class="layer">recordHash</td><td class="pick">bytes32</td><td>SHA-256 of the match record</td></tr>
+              <tr><td class="layer">metadataURI</td><td class="pick">string</td><td>optional off-chain pointer, empty for hash-only records</td></tr>
+              <tr><td class="layer">submitter</td><td class="pick">address</td><td>wallet that wrote the record</td></tr>
+              <tr><td class="layer">timestamp</td><td class="pick">uint256</td><td>block timestamp at write time</td></tr>
+              <tr><td class="layer">modelsAgreed / modelsTotal</td><td class="pick">uint8, uint8</td><td>the ensemble vote, e.g. 2 of 3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">07 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 8: STAGE 05 + CLIENT-SIDE VERIFY ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Stage <b>05</b></span><span class="meta">Prove it, from either side</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Two ways to prove a record is real, not just claimed.</h2>
+        <p class="content-lede reveal" data-editable>verify_record.py re-reads the chain from a transaction hash. The live proof viewer does the same thing from a browser, plus a client-side check against your own output file.</p>
+        <div class="reveal" style="display:flex; gap:30px;">
+          <div class="frame" style="flex:1; padding:32px 34px;">
+            <div class="kicker" style="color:var(--ink-dim); margin-bottom:12px;">From the command line</div>
+            <p style="font-size:20px; color:var(--ink-muted); line-height:1.6;">python verify_record.py --tx &lt;hash&gt; re-reads the contract and confirms the local saved record still matches.</p>
+          </div>
+          <div class="frame" style="flex:1; padding:32px 34px;">
+            <div class="kicker" style="color:var(--ink-dim); margin-bottom:12px;">From the browser</div>
+            <p style="font-size:20px; color:var(--ink-muted); line-height:1.6;">Upload your photo and record JSON. SHA-256 runs locally, byte-identical to the Python hash. Nothing you upload ever leaves the page.</p>
+          </div>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">08 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 9: PROOF LEDGER ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Proof</span><span class="meta">The most recent real anchor</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Not a mockup. This record is live on PolygonScan right now.</h2>
+        <div class="frame reveal">
+          <div class="ledger-head">
+            <span class="tag">2 of 3 models agreed</span>
+            <span style="font-family:var(--font-mono); font-size:19px; color:var(--ink-dim);">youtube.com, distance 0.5836</span>
+          </div>
+          <div class="ledger-body">
+            <div class="lfield"><div class="k">record hash</div><div class="v">0x4a377bc19ea1ff7714f49ef659fc5c9772d5640081459ed42a30135f55428317</div></div>
+            <div class="lfield"><div class="k">transaction</div><div class="v">dbc22bcddc97a65d7f3b4feb5de166fd090318616921866bbbf153a3acbcd336</div></div>
+            <div class="lfield"><div class="k">contract</div><div class="v">0x98D363d1b816FAc6a034bE3237fA20bcCbbC2c99</div></div>
+          </div>
+          <div class="runner-up"><span class="dist">0.6123</span><span>facebook.com, also 2/3 agreement, not the one anchored</span></div>
+          <div class="runner-up"><span class="dist">0.6125</span><span>instagram.com, also 2/3 agreement, not the one anchored</span></div>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">09 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 10: MEASURED ACCURACY ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker"><b>Measured</b> accuracy</span><span class="meta">100 LFW pairs, offline, known ground truth</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>92% true positive, 2% false positive. Measured, not assumed.</h2>
+        <div class="stat-row reveal" style="margin-bottom:28px;">
+          <div class="stat"><div class="n good">92.0%</div><div class="l">true positive rate, 46 of 50 genuine matches correctly verified</div></div>
+          <div class="stat"><div class="n bad">2.0%</div><div class="l">false positive rate, 1 of 49 different people incorrectly verified</div></div>
+          <div class="stat"><div class="n">1</div><div class="l">pair skipped, face not detected</div></div>
+        </div>
+        <div class="frame reveal" style="padding:30px 40px;">
+          <p style="font-size:19px; line-height:1.6; color:var(--ink-muted);">Both error cases were checked by hand against the real photos, not just the numbers. Worth saying plainly: ArcFace, Facenet, and VGG-Face were historically tuned against LFW by their own authors, so a strong LFW score is partly expected, not full proof of accuracy on the harder, messier photos this pipeline meets in the wild. Reproduce it with <span style="font-family:var(--font-mono); color:var(--ink);">python benchmark_ensemble.py --per-class 50</span>.</p>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">10 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 11: SECURITY REVIEW ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker"><b>Security</b> review</span><span class="meta">Full codebase, not just the diff</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Reviewed end to end. Nothing cleared the bar to file.</h2>
+        <p class="content-lede reveal" data-editable>The pipeline, both entrypoints, the smart contract, both static pages, and secrets handling were all checked for concrete, exploitable issues, not just style.</p>
+        <ul class="item-list frame reveal">
+          <li><span class="m pass">OK</span>XSS in the proof viewer: untrusted on-chain data only ever rendered through <span style="font-family:var(--font-mono); margin-left:4px;">.textContent</span>, never raw HTML</li>
+          <li><span class="m pass">OK</span>Overwrite risk in storeRecord(): not targetable, requires reproducing a record's exact bytes under SHA-256 preimage resistance</li>
+          <li><span class="m pass">OK</span>Path traversal via CLI arguments: not applicable, this is a local trusted-input tool, not a hosted service</li>
+          <li><span class="m pass">OK</span>Secrets: no hardcoded keys anywhere tracked, .env correctly gitignored</li>
+        </ul>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">11 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 12: TECH STACK ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Tech <b>stack</b></span><span class="meta">Every pick, and why</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Free, swappable, and independently checkable at every layer.</h2>
+        <div class="frame reveal">
+          <table class="stack">
+            <thead><tr><th>Layer</th><th>Pick</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td class="layer">Face detect + encode</td><td class="pick">DeepFace: RetinaFace + ArcFace</td><td>Free, self-hosted, swappable backends</td></tr>
+              <tr><td class="layer">Reverse image search</td><td class="pick">SerpApi, Google Lens</td><td>Genuine results, free tier, no card</td></tr>
+              <tr><td class="layer">Match verification</td><td class="pick">ArcFace + Facenet512 + VGG-Face</td><td>Majority vote catches a confidently wrong single model</td></tr>
+              <tr><td class="layer">Blockchain</td><td class="pick">Polygon Amoy testnet, web3.py</td><td>Free, ~2s finality, full Solidity support</td></tr>
+              <tr><td class="layer">Smart contract</td><td class="pick">Solidity, verified on PolygonScan</td><td>Readable and callable by anyone, no wallet to read</td></tr>
+              <tr><td class="layer">Proof viewer</td><td class="pick">Static page, ethers.js, GitHub Pages</td><td>Free, read-only, cannot be abused or run up a bill</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">12 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 13: LIMITATIONS ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Known <b>limitations</b></span><span class="meta">Said plainly, not buried</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>What this project doesn't claim to do.</h2>
+        <ul class="item-list frame reveal">
+          <li><span class="m">&gt;</span>Search coverage is limited to what Google has indexed, it won't find recent or private posts</li>
+          <li><span class="m">&gt;</span>A tamper-evident hash proves the record existed at a point in time, not that the matched content itself is authentic</li>
+          <li><span class="m">&gt;</span>No liveness or deepfake detection on the input photo</li>
+          <li><span class="m">&gt;</span>Runs on Polygon's public Amoy testnet, not mainnet, no real funds involved</li>
+          <li><span class="m">&gt;</span>Subject to the search API's free-tier rate limits</li>
+        </ul>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">13 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 14: CONSENT & ETHICS ============ -->
+    <section class="slide">
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Consent <b>&amp; ethics</b></span><span class="meta">A boundary, not a footnote</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Built for consenting subjects. Nothing else.</h2>
+        <div class="frame reveal" style="padding:40px 48px;">
+          <p style="font-size:24px; line-height:1.65; color:var(--ink-muted);">This pipeline is run only against consenting subjects with a real, findable public presence. It is not intended, and should not be used, for employment, credit, insurance, tenant-screening, or any other decision about a person without their knowledge and consent. The accuracy benchmark earlier in this deck used LFW, a public academic dataset with known ground truth, specifically to avoid testing on anyone without their consent.</p>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">14 / 15</span></div>
+    </section>
+
+    <!-- ============ SLIDE 15: CLOSING ============ -->
+    <section class="slide closing-slide">
+      <div class="grain"></div>
+      <div class="glow"></div>
+      <div class="filmstrip"></div>
+      <div class="kicker-row"><span class="kicker">Status</span><span class="meta">End to end, verified</span></div>
+      <div class="content-body">
+        <h2 class="content-title reveal" data-editable>Every stage in this deck has run against a real anchored record.</h2>
+        <div class="status-tag reveal" style="display:inline-flex; margin-bottom:34px;">Complete, security-reviewed, nothing open</div>
+        <div class="links reveal">
+          <a href="https://aniruddha072.github.io/face-id-blockchain-verification/" target="_blank" rel="noopener">&gt; Open the live proof viewer</a>
+          <a href="https://github.com/Aniruddha072/face-id-blockchain-verification" target="_blank" rel="noopener">&gt; Read the source and the full build log on GitHub</a>
+        </div>
+      </div>
+      <div class="page-chrome"><span>Face ID + Blockchain Verification</span><span class="pg">15 / 15</span></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Deck navigation, kept outside the slide design system -->
+<div class="deck-controls">
+  <button id="prevBtn" aria-label="Previous slide">&lt;</button>
+  <span class="count" id="slideCount">1 / 15</span>
+  <button id="nextBtn" aria-label="Next slide">&gt;</button>
+</div>
+
+<!-- Inline editing affordance -->
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)">&#9998;</button>
+<div class="save-hint">Edit mode: click text to change it. Autosaves to this browser. Press E to exit.</div>
+
+<script>
+/* ===========================================
+   SLIDE PRESENTATION CONTROLLER
+   Arrow keys / space / swipe / wheel to navigate.
+   Stage scales as a whole, never reflows.
+   =========================================== */
+class SlidePresentation {
+  constructor(){
+    this.slides = document.querySelectorAll('.slide');
+    this.currentSlide = 0;
+    this.stage = document.getElementById('deckStage');
+    this.countEl = document.getElementById('slideCount');
+    this.setupStageScale();
+    this.setupKeyboardNav();
+    this.setupTouchNav();
+    this.setupWheelNav();
+    document.getElementById('prevBtn').addEventListener('click', () => this.showSlide(this.currentSlide - 1));
+    document.getElementById('nextBtn').addEventListener('click', () => this.showSlide(this.currentSlide + 1));
+    this.showSlide(0);
+  }
+  setupStageScale(){
+    const scale = () => {
+      const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      const x = (window.innerWidth - 1920 * factor) / 2;
+      const y = (window.innerHeight - 1080 * factor) / 2;
+      this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+    };
+    scale();
+    window.addEventListener('resize', scale);
+  }
+  setupKeyboardNav(){
+    document.addEventListener('keydown', (e) => {
+      if (document.body.classList.contains('edit-mode') && e.target.getAttribute('contenteditable')) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); this.showSlide(this.currentSlide + 1); }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); this.showSlide(this.currentSlide - 1); }
+      if (e.key.toLowerCase() === 'e' && !e.target.getAttribute('contenteditable')) { toggleEditMode(); }
+    });
+  }
+  setupTouchNav(){
+    let startX = 0;
+    document.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 60) this.showSlide(this.currentSlide + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+  }
+  setupWheelNav(){
+    let locked = false;
+    document.addEventListener('wheel', (e) => {
+      if (locked) return;
+      if (Math.abs(e.deltaY) < 30) return;
+      locked = true;
+      this.showSlide(this.currentSlide + (e.deltaY > 0 ? 1 : -1));
+      setTimeout(() => { locked = false; }, 500);
+    }, { passive: true });
+  }
+  showSlide(index){
+    this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+    this.slides.forEach((slide, i) => {
+      slide.classList.toggle('active', i === this.currentSlide);
+      slide.classList.toggle('visible', i === this.currentSlide);
+    });
+    this.countEl.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
+  }
+}
+/* ===========================================
+   INLINE EDITING
+   Click any marked element to edit it. Autosaves to localStorage
+   (per-browser only) so edits survive a reload on this device.
+   =========================================== */
+const STORAGE_KEY = 'faceid-deck-content-v1';
+const stageEl = document.getElementById('deckStage');
+const editToggle = document.getElementById('editToggle');
+const hotzone = document.getElementById('editHotzone');
+let hideTimeout = null;
+let saveTimeout = null;
+
+function restoreSavedContent(){
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) stageEl.innerHTML = saved;
+  } catch (e) { /* private browsing or storage disabled: just skip restoring */ }
+}
+function saveContent(){
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    try { localStorage.setItem(STORAGE_KEY, stageEl.innerHTML); } catch (e) { /* storage unavailable, nothing to do */ }
+  }, 500);
+}
+function setEditableState(on){
+  stageEl.querySelectorAll('[data-editable]').forEach((el) => { el.setAttribute('contenteditable', on ? 'true' : 'false'); });
+}
+function toggleEditMode(){
+  const on = !document.body.classList.contains('edit-mode');
+  document.body.classList.toggle('edit-mode', on);
+  editToggle.classList.toggle('active', on);
+  setEditableState(on);
+}
+editToggle.addEventListener('click', toggleEditMode);
+hotzone.addEventListener('click', toggleEditMode);
+hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); editToggle.classList.add('show'); });
+hotzone.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!document.body.classList.contains('edit-mode')) editToggle.classList.remove('show'); }, 400); });
+editToggle.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); });
+editToggle.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!document.body.classList.contains('edit-mode')) editToggle.classList.remove('show'); }, 400); });
+stageEl.addEventListener('input', saveContent);
+
+/* Restore any saved edits BEFORE the controller queries .slide nodes,
+   otherwise it would hold references to nodes this replaces. */
+restoreSavedContent();
+const deck = new SlidePresentation();
+</script>
+</body>
+</html>

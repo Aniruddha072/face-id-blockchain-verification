@@ -474,3 +474,45 @@ art. Mirrored the same grain, glow, and bracket motif onto the status
 artifact so the two keep reading as one site. Checked in a real browser:
 grain and glow don't reduce text contrast, the bracket row wraps cleanly,
 no change to any JS behavior.
+
+## 2026-10-10 - Added a 15-slide walkthrough deck, built with the frontend-slides skill
+
+User asked to use the newly-installed frontend-slides plugin to redo "the
+frontend page." That skill builds fixed 1920x1080 presentation decks with
+keyboard/swipe navigation and explicitly does not reflow for mobile, the
+opposite of what a live interactive tool page needs. Flagged the mismatch
+instead of forcing it onto `docs/index.html`; the user agreed and asked for
+a separate deck instead, kept apart from the live proof viewer.
+
+Went through the skill's actual process: content discovery (pitch deck,
+medium length, reading-first density so it holds up without narration),
+then three real style previews for the user to react to rather than
+describing options in words: a Swiss Modern preset (white, Archivo Black,
+red accent, visible grid), the pack's "Signal" bold template (navy, cream,
+antique gold, Source Serif 4), and a custom option that extends the proof
+viewer's and status artifact's existing visual system (darkroom palette,
+film grain, safelight glow, autofocus-bracket graphic) into the deck
+format. User picked the custom option, so the deck now reads as the same
+brand as the two live pages instead of a fourth unrelated look.
+
+15 slides: title, the single-model failure case that motivates ensemble
+verification, the 5-stage pipeline, one detail slide per stage, the real
+anchored record, the LFW accuracy numbers with the same tuning caveat as
+the README, the security review result, tech stack, limitations, the
+consent/ethics stance, and a closing status slide. All real project data,
+no placeholder content, no illustrated faces (consistent with not using
+real photos anywhere on this project without consent).
+
+Caught and fixed a real layout bug before shipping: every slide was
+originally built with each element individually absolute-positioned at a
+hand-picked pixel offset, so slide 2's two-line title overlapped the body
+copy below it. Fixed properly, not by shortening the one offending title,
+by switching every content slide to a single flowing wrapper (title, lede,
+content stack in normal document flow), which makes the whole layout
+immune to this bug regardless of how any title wraps, not just the one
+case that happened to get caught. Re-tested all 15 slides plus the inline
+edit-mode toggle in a real browser afterward, nothing left overlapping.
+
+Placed it at `docs/presentation.html`, not the repo root, so it's served
+by GitHub Pages like the proof viewer, a real clickable no-setup link
+instead of a file someone has to clone and open. Linked from the README.
