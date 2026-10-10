@@ -60,8 +60,12 @@ code{font-family:var(--mono); color:var(--ink); background:var(--panel-raised); 
 .frame::before, .frame::after{content:""; position:absolute; width:11px; height:11px; pointer-events:none;}
 .frame::before{top:-1px; left:-1px; border-top:2px solid var(--signal); border-left:2px solid var(--signal);}
 .frame::after{bottom:-1px; right:-1px; border-bottom:2px solid var(--signal); border-right:2px solid var(--signal);}
-.frame-head{margin:0 0 18px; padding-bottom:14px; border-bottom:1px solid var(--line);}
+.frame-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:0 0 18px; padding-bottom:14px; border-bottom:1px solid var(--line);}
 .frame-label{font-family:var(--display); font-size:15.5px; font-weight:600; margin:0; letter-spacing:-0.005em;}
+.frame-tag{font-family:var(--sans); font-size:11.5px; font-weight:500; color:var(--ink-dim); border:1px solid var(--line); border-radius:99px; padding:2px 10px;}
+.frame-tag.everyone{color:var(--develop); border-color:var(--develop);}
+.hint{font-size:12.5px; color:var(--ink-dim); margin:-4px 0 14px;}
+.example-badge{font-family:var(--sans); font-size:11px; font-weight:500; color:var(--ink-dim); border:1px solid var(--line); border-radius:99px; padding:2px 9px;}
 
 label{display:block; font-family:var(--sans); font-size:12.5px; font-weight:500; color:var(--ink-dim); margin-bottom:8px;}
 input[type=text]{
@@ -130,15 +134,21 @@ input[type=file]{
   <div class="slate">Polygon Amoy testnet, verified contract</div>
   <h1>On-chain proof viewer</h1>
   <p class="lead">
-    Reads live from <code>FaceRecord.sol</code>, deployed and source-verified on Polygon
-    Amoy testnet. Paste a record hash to confirm a match record is genuinely on-chain,
-    unaltered since it was anchored, including how many independent face-verification
-    models agreed on the match. This page only reads public data, no wallet or API
-    key needed.
+    Two things live on this page. Anyone can look up a record hash below and
+    read it straight from <code>FaceRecord.sol</code> on Polygon Amoy, no
+    wallet, no account, nothing you type ever leaves your browser except the
+    hash itself. Further down is a second tool just for people who've run the
+    pipeline locally; skip it if that's not you. For the full story behind
+    this project, see the
+    <a href="https://github.com/Aniruddha072/face-id-blockchain-verification#readme" target="_blank" rel="noopener">README</a>.
   </p>
 
   <section class="frame">
-    <div class="frame-head"><h2 class="frame-label">Look up a record</h2></div>
+    <div class="frame-head">
+      <h2 class="frame-label">Look up a record</h2>
+      <span class="frame-tag everyone">open to anyone</span>
+    </div>
+    <p class="hint">A real example is already loaded below. Paste a different hash to look up another record, or a different one from the same chain.</p>
     <label for="hashInput">Record hash (bytes32)</label>
     <input type="text" id="hashInput" placeholder="0x..." spellcheck="false" autocomplete="off">
     <div class="row">
@@ -151,6 +161,7 @@ input[type=file]{
       <div class="ledger-head">
         <div class="vote-dots" id="voteDots" aria-hidden="true"></div>
         <div class="agreement-text" id="agreementText"></div>
+        <span id="exampleBadge" class="example-badge" style="display:none;">Example record</span>
       </div>
       <div class="ledger-body">
         <div class="lfield"><div class="k">record hash</div><div class="vwrap"><div class="v" id="r-hash"></div><button class="copy-btn" data-copy="r-hash">Copy</button></div></div>
@@ -163,13 +174,16 @@ input[type=file]{
   </section>
 
   <section class="frame">
-    <div class="frame-head"><h2 class="frame-label">Verify your own record</h2></div>
+    <div class="frame-head">
+      <h2 class="frame-label">Verify your own record</h2>
+      <span class="frame-tag">only if you ran the pipeline</span>
+    </div>
+    <p class="hint">Skip this unless you have both files below from running <code>python main.py</code> yourself. There's nothing to check here otherwise.</p>
     <p class="sublead">
-      Have a result from running the pipeline yourself? Upload the source photo and
-      the saved record JSON (<code>output/&lt;tx_hash&gt;.json</code>). This recomputes
-      the hash in your browser, the same way <code>verify_record.py</code> does, then
-      checks it against the live chain. Nothing is uploaded anywhere, the photo and
-      JSON never leave this page.
+      Upload the source photo and the saved record JSON (<code>output/&lt;tx_hash&gt;.json</code>).
+      This recomputes the hash in your browser, the same way <code>verify_record.py</code> does,
+      then checks it against the live chain. Nothing is uploaded anywhere, the photo and JSON
+      never leave this page.
     </p>
     <div class="file-row">
       <div class="file-field">
@@ -259,14 +273,22 @@ async function lookup() {
     document.getElementById("r-metadata").textContent = record.metadataURI || "(none, hash-only record)";
 
     const txField = document.getElementById("r-tx");
+    const exampleBadge = document.getElementById("exampleBadge");
     if (raw === EXAMPLE_HASH) {
       txField.innerHTML = '<a href="https://amoy.polygonscan.com/tx/' + EXAMPLE_TX + '" target="_blank" rel="noopener">' + EXAMPLE_TX + "</a>";
+      exampleBadge.style.display = "";
     } else {
       txField.textContent = "(not tracked by this page, search the record hash on PolygonScan)";
+      exampleBadge.style.display = "none";
     }
 
     ledgerEl.classList.add("visible");
-    setStatus("Record found and read directly from the contract.", "ok");
+    setStatus(
+      raw === EXAMPLE_HASH
+        ? "This is the project's real example, already anchored on-chain."
+        : "Record found and read directly from the contract.",
+      "ok"
+    );
   } catch (err) {
     setStatus("Lookup failed: " + (err && err.message ? err.message : String(err)), "err");
   } finally {

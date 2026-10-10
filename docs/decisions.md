@@ -423,3 +423,28 @@ The status artifact was rebuilt with the same tokens so the two pages
 keep reading as one site, and it also picked up the LFW accuracy numbers
 and the security review result, neither of which existed the last time
 it was redesigned.
+
+## 2026-10-10 - Made the proof viewer self-explanatory, not just restyled
+
+The redesign above fixed the look but not a real usability gap: a visitor
+landing cold on the page had no way to tell what the two sections were
+for, which one applied to them, or whether the data already on screen was
+real or just an example. Fixed with content, not more chrome:
+
+- A "open to anyone" tag on the lookup section and a "only if you ran the
+  pipeline" tag on the verify section, so the audience for each is obvious
+  before reading a word of body copy
+- An explicit "skip this unless..." line on the verify section, since the
+  single biggest point of confusion is a visitor without pipeline output
+  wondering if they're supposed to have one
+- A visible "Example record" badge and a status line that says so, once a
+  visitor pastes their own hash and looks something up the badge clears
+  automatically
+- A link to the README right in the opening paragraph, for anyone who
+  wants the full story before touching either tool
+- No new navigation chrome added; the page is two sections long and a nav
+  bar for two anchors would be clutter, not clarity
+
+Verified in a real browser: the invalid-hash error path, the "no record
+found" path, the example badge showing and clearing correctly, and the
+reset-to-example flow all still work exactly as before.
