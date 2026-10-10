@@ -588,3 +588,18 @@ Also added direct anchor links to the lookup and verify sections
 (`#lookup`, `#verify`), the redesign gave both sections real `id`
 attributes for the island nav, so the README could finally link each
 one specifically instead of just the page as a whole.
+
+## 2026-10-10 - Retook the record screenshot, visible scrollbar looked unprofessional
+
+The first record screenshot in the README's gallery was captured against
+the full OS-rendered scrollbar on the right edge of the browser, visible
+and distracting in a static image where no one can actually scroll.
+Retook it with the page's own scrollbar hidden via a one-off injected
+style before capturing (`scrollbar-width: none` / `::-webkit-scrollbar`),
+not by cropping it off, since cropping would have shifted the composition
+instead of just removing the artifact. Replaced
+`docs/screenshots/proof-viewer-record.png` in place, same crop otherwise.
+
+User also asked to stop the README from accumulating further unprompted.
+Noted as a standing rule in memory: fix or replace what's asked, don't
+keep adding new images or sections on top of it.
