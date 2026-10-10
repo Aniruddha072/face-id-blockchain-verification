@@ -4,12 +4,29 @@ A pipeline that detects a face, finds a genuine social media match through
 reverse-image search, and anchors that match on-chain as a tamper-evident,
 verifiable record.
 
+![On-chain proof viewer](docs/screenshots/proof-viewer-hero.png)
+
 **[Try the live on-chain proof viewer](https://aniruddha072.github.io/face-id-blockchain-verification/)**,
 reads directly from the deployed, source-verified contract, no setup needed.
+Jump straight to [looking up a record](https://aniruddha072.github.io/face-id-blockchain-verification/#lookup)
+or [verifying your own pipeline output](https://aniruddha072.github.io/face-id-blockchain-verification/#verify).
 
 **[Walkthrough deck](https://aniruddha072.github.io/face-id-blockchain-verification/presentation.html)**,
 a 15-slide tour of the pipeline, the real anchored record, and the measured
 accuracy, for anyone who'd rather read a summary than the full README.
+
+<table>
+<tr>
+<td width="33%"><img src="docs/screenshots/proof-viewer-record.png" alt="A real anchored record read live from the contract"></td>
+<td width="33%"><img src="docs/screenshots/proof-viewer-verify.png" alt="Client-side verification of your own pipeline output"></td>
+<td width="34%"><img src="docs/screenshots/deck-title.png" alt="Walkthrough deck title slide"></td>
+</tr>
+<tr>
+<td align="center"><sub>A real record, read live from the contract</sub></td>
+<td align="center"><sub>Verify your own output, entirely in-browser</sub></td>
+<td align="center"><sub>The 15-slide walkthrough deck</sub></td>
+</tr>
+</table>
 
 ## Overview
 
@@ -27,6 +44,8 @@ hasn't been altered.
 photo -> detect & encode -> reverse-image search -> verify match -> hash + anchor on-chain -> read-back proof
          (DeepFace/ArcFace)   (SerpApi Google Lens)    (DeepFace.verify)   (web3.py, Polygon Amoy)   (verify_record.py)
 ```
+
+![The five pipeline stages, from the walkthrough deck](docs/screenshots/deck-pipeline.png)
 
 ## Requirements mapping
 

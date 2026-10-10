@@ -27,3 +27,6 @@ My-pic-test.jpg
 *.jpeg
 *.png
 *.webp
+
+# Exception: UI screenshots for the README, not photos of anyone
+!docs/screenshots/*.png

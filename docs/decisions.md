@@ -569,3 +569,22 @@ Implementation notes:
   proof-sheet identity, so it's now visually out of sync with the two
   pages that were just redone. Not fixed without being asked, since only
   the proof viewer and deck were in scope this time
+
+## 2026-10-10 - Added real screenshots to the README instead of describing the pages in prose
+
+The README linked to the live proof viewer and deck but had no visual of
+either, so anyone skimming the repo saw plain text first. Captured real
+screenshots from the actual rendered pages (not mockups): the proof
+viewer's hero as the README's lead image, a real anchored record read
+live from the contract, the client-side verify card, the deck's title
+slide, and the deck's pipeline slide placed next to the architecture
+diagram.
+
+Captured with the browser automation tool against a local server, not
+generated. Cropped out the floating nav's overlap artifact on scrolled
+shots and the 16:9 letterbox bars on deck shots with Pillow, otherwise
+unedited. Saved under `docs/screenshots/`, five PNGs, under 1MB total.
+Also added direct anchor links to the lookup and verify sections
+(`#lookup`, `#verify`), the redesign gave both sections real `id`
+attributes for the island nav, so the README could finally link each
+one specifically instead of just the page as a whole.
